@@ -90,13 +90,26 @@ a { color: inherit; text-decoration: none; }
 /* herd strip */
 .herd { padding-block: 18vh 14vh; }
 .herd h2, .section-title { font-size: clamp(40px, 5.6vw, 88px); max-width: 15ch; }
-.herd .row { margin-top: 70px; display: grid; grid-template-columns: repeat(4, 1fr); gap: clamp(12px, 2vw, 28px); }
+.herd { padding-bottom: 0; }
+/* Every harness, drifting past in one endless row; the second copy of the list closes the loop. */
+.carousel { margin-top: 70px; overflow: hidden; mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); }
+.carousel .track { list-style: none; margin: 0; padding: 12px 0 28px; display: flex; gap: clamp(12px, 2vw, 24px); width: max-content; animation: drift 120s linear infinite; }
+.carousel:hover .track, .carousel:focus-within .track { animation-play-state: paused; }
+.carousel .sheep-card { width: clamp(220px, 22vw, 290px); flex: none; }
+@keyframes drift { to { transform: translateX(calc(-50% - clamp(6px, 1vw, 12px))); } }
+@media (prefers-reduced-motion: reduce) {
+  .carousel { overflow-x: auto; scroll-snap-type: x mandatory; }
+  .carousel .track { animation: none; padding-inline: 16px; }
+  .carousel .sheep-card { scroll-snap-align: start; }
+  .carousel .sheep-card[aria-hidden] { display: none; }
+}
+.herd-after { padding-bottom: 14vh; }
 .sheep-card { position: relative; border-radius: 28px; padding: 28px 24px 24px; min-height: 360px; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; color: var(--ink); background: var(--c); }
 .sheep-card img { width: 78%; margin: -10px auto 0; filter: drop-shadow(0 16px 14px #0004); transition: transform .5s cubic-bezier(.3,1.6,.5,1); }
 .sheep-card:hover img { transform: translateY(-14px) rotate(-3deg); }
 .sheep-card .name { font-size: 26px; font-weight: 700; letter-spacing: -.02em; }
 .sheep-card .mono { opacity: .7; }
-.herd .note { margin-top: 26px; max-width: 60ch; }
+.herd-after .note { margin-top: 26px; max-width: 60ch; }
 
 /* principles */
 .principles { padding-block: 10vh; }
@@ -194,7 +207,6 @@ footer .big b { color: var(--accent); }
   .nav ul { display: none; }
   .hero { grid-template-columns: 1fr; padding-top: 100px; }
   .hero .stage { order: -1; margin-top: 10px; }
-  .herd .row { grid-template-columns: 1fr 1fr; }
   .sheep-card { min-height: 270px; }
   .journeys .pin { grid-template-columns: 1fr; grid-template-rows: auto 1fr; gap: 0; padding-top: 80px; }
   .journeys .device .r1 { --w: min(300px, 64vw); }

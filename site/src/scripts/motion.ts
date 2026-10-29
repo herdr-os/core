@@ -59,9 +59,9 @@ mm.add("(prefers-reduced-motion: no-preference)", () => {
     gsap.from(s.words, { yPercent: 100, duration: 1, ease: "expo.out", stagger: 0.04, scrollTrigger: { trigger: el, start: "top 82%" } });
   });
 
-  gsap.from("[data-card]", {
+  gsap.from("[data-carousel] .sheep-card:nth-child(-n+6)", {
     y: 80, opacity: 0, rotate: (i) => [-4, 3, -2, 4][i % 4], duration: 1.1, ease: "expo.out", stagger: 0.08,
-    scrollTrigger: { trigger: ".herd .row", start: "top 80%" },
+    scrollTrigger: { trigger: "[data-carousel]", start: "top 85%" },
   });
 
   // The four rules light up word by word as you read them.

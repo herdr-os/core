@@ -2,12 +2,7 @@
 import "../styles/global.css";
 import Screen from "../components/Screen.astro";
 
-const harnesses = [
-  { name: "Claude Code", sheep: "brand-claude", c: "var(--claude)", ink: "#141413", note: "Opus, Sonnet, Haiku" },
-  { name: "Codex", sheep: "brand-codex", c: "var(--codex)", ink: "#0d0d0d", note: "GPT, any effort" },
-  { name: "Pi", sheep: "brand-pi", c: "var(--pi)", ink: "#0b1a22", note: "Any provider" },
-  { name: "OpenCode", sheep: "brand-opencode", c: "var(--opencode)", ink: "#f1ecec", note: "Any model" },
-];
+import harnesses from "../harnesses.json";
 
 const chapters = [
   { n: "01", tag: "Glance", title: "It sleeps until someone needs you.", body: "The R1 rests on the lock screen with a quiet count of who is working. Wake it and the companion tells you, in one breath, what happened while you were away.", chips: ["Asleep", "Spoken briefing", "Pasture"], screens: ["asleep", "briefing", "pasture"] },
@@ -108,18 +103,22 @@ const sideways = [
     </section>
 
     <section class="wrap herd">
-      <p class="mono orange">The herd</p>
+      <p class="mono orange">The herd · {harnesses.length} harnesses</p>
       <h2 class="display section-title" data-words>One sheep per agent. Wool in its maker's colors.</h2>
-      <div class="row">
-        {harnesses.map((h) => (
-          <div class="sheep-card" style={`--c:${h.c};--ink:${h.ink}`} data-card>
+    </section>
+    <div class="carousel" aria-label={`Every harness Herdr runs: ${harnesses.map((h) => h.label).join(", ")}`} data-carousel>
+      <ul class="track">
+        {[0, 1].map((copy) => harnesses.map((h) => (
+          <li class="sheep-card" style={`--c:${h.color};--ink:${h.ink}`} aria-hidden={copy ? "true" : undefined}>
             <span class="mono">{h.note}</span>
-            <img src={`/sheep/${h.sheep}.svg`} alt={`${h.name} sheep`} />
-            <span class="name">{h.name}</span>
-          </div>
-        ))}
-      </div>
-      <p class="note dim">The plain sheep is the companion. It speaks for the herd; the branded ones speak for themselves. A sleeping sheep is idle, and the words always say so too.</p>
+            <img src={`/sheep/brand-${h.id}.svg`} alt="" loading="lazy" />
+            <span class="name">{h.label}</span>
+          </li>
+        )))}
+      </ul>
+    </div>
+    <section class="wrap herd-after">
+      <p class="note dim">The plain sheep is the companion. It speaks for the herd; the branded ones speak for themselves. A sleeping sheep is idle, and the words always say so too. Any agent Herdr runs joins the herd; one it doesn't know yet grazes as a plain sheep.</p>
     </section>
 
     <section class="wrap principles" aria-label="Design principles">
