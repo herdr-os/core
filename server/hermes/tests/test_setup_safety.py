@@ -110,7 +110,7 @@ elif args[:5]==['shell','pm','list','packages','-U']: print('package:dev.r1ptt u
                                              SETUP_TEST_LOG=str(log)), capture_output=True, text=True, timeout=15)
             self.assertEqual(0, result.returncode, result.stdout + result.stderr)
             calls = [json.loads(line) for line in log.read_text().splitlines()]
-            self.assertIn(['shell', 'cmd', 'package', 'set-home-activity', 'dev.r1ptt/.HomeActivity'], calls)
+            self.assertIn(['shell', 'cmd', 'package', 'set-home-activity', 'dev.r1ptt/.herdr.ui.HerdActivity'], calls)
             self.assertFalse(any('locksettings' in call or 'dpm' in call for call in calls))
             self.assertIn('preserving Android lock and administrator settings', result.stdout)
 

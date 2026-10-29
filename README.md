@@ -1,26 +1,58 @@
-# Herdr OS: a pocket remote for your coding agents
+# Herdr OS: your coding agents, a herd in your hand
 
-Herdr OS turns a Rabbit R1 into a remote for coding agents managed by [Herdr](https://herdr.dev):
-Claude Code, Codex, Pi and others, across your machines. Agents keep running on your computers.
-The R1 shows them as a deck of cards with the one that needs you on top, and lets you answer its
-question, hand it a task by voice, read its terminal and review its diff. Every action is
-confirmed on screen and bound to exactly what you saw.
+Herdr OS turns a Rabbit R1 into a pocket companion for the coding agents [Herdr](https://herdr.dev)
+runs on your machines: Claude Code, Codex, Pi and OpenCode. The agents keep running on your
+computers. On the R1 each one is a sheep in its harness's colors on a pasture that follows the
+time of day; the one that needs you stands in front with its question. Answer it with a touch, talk
+to it with the side button, send it a photo, read its terminal, see its subagents and background
+commands, and switch its model. Every action names where it goes and is bound to what you saw.
 
-| The Herd | A decision | Terminal | Diff |
+| Pasture | A question | Thread | Walkie |
 |:---:|:---:|:---:|:---:|
-| <img src="docs/screenshots/herdr/01-herd.png" width="180" alt="Deck of agent cards with a blocked Claude on top"> | <img src="docs/screenshots/herdr/04-decision.png" width="180" alt="Claude asking which migration strategy to use"> | <img src="docs/screenshots/herdr/07-terminal.png" width="180" alt="Sanitized terminal output"> | <img src="docs/screenshots/herdr/09-diff.png" width="180" alt="One diff hunk with plus and minus lines"> |
+| <img src="docs/screenshots/herdr/pasture.png" width="180" alt="Agents as sheep on the pasture, the asking one in front"> | <img src="docs/screenshots/herdr/decision.png" width="180" alt="A sheep asking which migration strategy to use"> | <img src="docs/screenshots/herdr/thread.png" width="180" alt="The conversation with an agent as speech bubbles"> | <img src="docs/screenshots/herdr/walkie.png" width="180" alt="Walkie-talkie: the agent's reply in its brand color"> |
+| **Shade** | **Subagents** | **Model** | **Asleep** |
+| <img src="docs/screenshots/herdr/shade.png" width="180" alt="The pull-down shade with status, shortcuts and toggles"> | <img src="docs/screenshots/herdr/subagents.png" width="180" alt="An agent's subagents with their latest steps"> | <img src="docs/screenshots/herdr/model.png" width="180" alt="Choosing an agent's model and effort"> | <img src="docs/screenshots/herdr/asleep.png" width="180" alt="The asleep lock screen with the companion sheep"> |
 
-Rendered by `HerdrBridgeTest` from the bridge's fixture herd, not captured on hardware.
+Rendered by the app's Robolectric tests against the bridge's demo herd, not captured on hardware.
 
-- **Set up and use:** [docs/HERDR.md](docs/HERDR.md). Run `bridge/` next to Herdr, enroll the R1, pair.
-- **Contract:** [protocol/openapi.yaml](protocol/openapi.yaml). **Security:** [docs/SECURITY.md](docs/SECURITY.md).
-- **Status:** [docs/HARDWARE_ACCEPTANCE.md](docs/HARDWARE_ACCEPTANCE.md). Automated against a real bridge
-  and Herdr 0.9.5, and exercised on a physical R1 (wheel, side button, decisions, review, offline,
-  revocation); speech, standby battery and two-host runs are still open.
-- **Spec:** [SPEC.md](SPEC.md). **Fork base:** [UPSTREAM.md](UPSTREAM.md).
+## Install
 
-Herdr OS is a fork of robotOS. Its Hermes push-to-talk app is still here, one menu entry from the
-deck. The rest of this README is robotOS's.
+- **The R1:** <https://ds-mac-mini.tail938700.ts.net/install> walks a stock R1 to Herdr OS from
+  Chrome over USB (unlock, LineageOS, Magisk root, Herdr OS), confirming before anything that
+  erases. The same steps by hand are in [docs/INSTALL.md](docs/INSTALL.md).
+- **The bridge,** on the computer where Herdr runs:
+
+  ```sh
+  npm install -g @herdr-os/bridge
+  herdr-bridge serve --tailscale --machine <other-herdr-host>
+  herdr-bridge enroll --tailscale --qr      # scan the code on the R1
+  ```
+
+  More in [docs/HERDR.md](docs/HERDR.md) and the package README ([bridge/README.md](bridge/README.md)).
+
+## What's here
+
+| Folder | What it is |
+|---|---|
+| `app/` | The R1 app (Kotlin, package `dev.r1ptt`): the pasture, shade, thread, walkie, camera, terminal (libghostty), model picker and the rest of [docs/DESIGN.md](docs/DESIGN.md) |
+| `bridge/` | `@herdr-os/bridge` (TypeScript, Node 24+, no dependencies): watches Herdr on each host, reads each agent's own session files for model, context, subagents and messages, and serves the R1's API ([protocol/openapi.yaml](protocol/openapi.yaml)) |
+| `magisk/r1ptt-system/` | The Magisk module: wheel and button mapping, power defaults, Android's lock screen off, the Herdr boot animation (`tools/render-boot.py`) |
+| `site/` | The website (Astro + GSAP) with every R1 screen rebuilt as HTML from the Paper designs, and the Chrome USB installer at `/install` |
+| `tools/` | Flashing, rooting and provisioning scripts, `package-downloads.sh` for the site's builds, device checks |
+| `design-reference/` | Sheep, harness logos and the boot screen, from the Paper file "Herdr OS · vision" |
+
+## Develop
+
+```sh
+JAVA_HOME=/opt/homebrew/opt/openjdk@21 ./gradlew :app:testDebugUnitTest :app:assembleRelease
+cd bridge && npm test                     # node --test, runs the .ts directly
+cd site && npm install && npm run dev     # http://localhost:4321; /screens lists every R1 screen
+node bridge/src/main.ts serve --fixtures  # a demo herd, no Herdr needed
+```
+
+Herdr OS is a fork of [robotOS](UPSTREAM.md); its Hermes push-to-talk app is still here, one menu
+entry from the pasture. **Spec:** [SPEC.md](SPEC.md). **Security:** [docs/SECURITY.md](docs/SECURITY.md).
+The rest of this README is robotOS's.
 
 ---
 

@@ -57,6 +57,8 @@ run() {
     light_after_inactive_to=0,inactive_to=30000,sensing_to=0,locating_to=0,motion_inactive_to=0,idle_after_inactive_to=0
 
   # Herdr OS's asleep screen is the lock screen; Android's own keyguard never shows on top of it.
+  # Android honours this only while no PIN, pattern or password is set, so an R1 locked as
+  # docs/INSTALL.md describes keeps its secure lock screen.
   run locksettings set-disabled true
 
   # Shorter animations: less GPU time per screen change on the A53 cores.

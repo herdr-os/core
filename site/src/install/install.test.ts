@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, openAsBlob, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, openAsBlob, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { gzipSync } from "node:zlib";
@@ -13,13 +13,18 @@ import { provision, root } from "./adb-steps.ts";
 import { asSparse, toRaw } from "./usb.ts";
 
 const REPO = new URL("../../../", import.meta.url).pathname;
+// These tests check the installer against the core repo's own scripts; the standalone website repo
+// has no tools/, so there they skip.
+const CORE = existsSync(join(REPO, "tools/provision.sh"));
 const FW = join(REPO, "firmware");
 const STOCK_ZIP = join(FW, "rabbit_OS_v0.8.293.zip");
 const MAGISK = join(FW, "Magisk-v30.7.apk");
-const DOWNLOADS = join(REPO, "site/public/downloads");
+// firmware/ is git-ignored: real files only on a machine that downloaded them.
+const HAVE_FW = existsSync(STOCK_ZIP) && existsSync(MAGISK);
+const DOWNLOADS = new URL("../../public/downloads/", import.meta.url).pathname;
 const sh = (cmd: string) => execFileSync("bash", ["-c", cmd], { maxBuffer: 1 << 26 });
 
-test("stock zip: the four images, read lazily, byte-identical to unzip", async () => {
+test("stock zip: the four images, read lazily, byte-identical to unzip", { skip: !HAVE_FW && "needs firmware/" }, async () => {
   const imgs = await stockImages(await openAsBlob(STOCK_ZIP));
   for (const [name, img] of Object.entries(imgs)) {
     const want = sh(`unzip -p '${STOCK_ZIP}' 'rabbit_OS_v0.8.293_20250516110545/${name}'`);
@@ -28,7 +33,7 @@ test("stock zip: the four images, read lazily, byte-identical to unzip", async (
   }
 });
 
-test("vbmeta patch matches lib.sh's vbmeta_disabled byte for byte", async () => {
+test("vbmeta patch matches lib.sh's vbmeta_disabled byte for byte", { skip: !HAVE_FW && "needs firmware/" }, async () => {
   const { "vbmeta.img": vb } = await stockImages(await openAsBlob(STOCK_ZIP));
   const ours = new Uint8Array(await (await vbmetaDisabled(vb)).blob.arrayBuffer());
   const dir = mkdtempSync(join(tmpdir(), "vbmeta-"));
@@ -50,7 +55,7 @@ test("sha256: hosted downloads match manifest.json, a flipped byte does not", as
   }
 });
 
-test("Magisk files: what root.sh unzips and renames", async () => {
+test("Magisk files: what root.sh unzips and renames", { skip: !HAVE_FW && "needs firmware/" }, async () => {
   const names = (await magiskFiles(await openAsBlob(MAGISK))).map((f) => f.name).sort();
   const dir = mkdtempSync(join(tmpdir(), "magisk-"));
   sh(`cd '${dir}' && unzip -q -j '${MAGISK}' 'assets/*.sh' 'assets/stub.apk' 'lib/arm64-v8a/*' && for f in lib*.so; do n=$(basename "$f" .so); mv "$f" "\${n#lib}"; done`);
@@ -96,7 +101,7 @@ test("fastboot CLI words become protocol commands", () => {
   assert.equal(toRaw("flashing get_unlock_ability"), "flashing get_unlock_ability");
 });
 
-test("debloat list parses like provision.sh's grep | awk | grep", () => {
+test("debloat list parses like provision.sh's grep | awk | grep", { skip: !CORE && "needs the core repo" }, () => {
   const file = join(REPO, "tools/debloat.txt");
   assert.deepEqual(debloatList(readFileSync(file, "utf8")),
     sh(`grep -v '^\\s*#' '${file}' | awk '{print $1}' | grep .`).toString().trim().split("\n"));
@@ -134,7 +139,7 @@ test("dry run: unlock, as INSTALL.md step 1", async () => {
   ]);
 });
 
-test("dry run: flash-gsi.sh step for step", async () => {
+test("dry run: flash-gsi.sh step for step", { skip: !HAVE_FW && "needs firmware/" }, async () => {
   const { ctx, lines } = dry();
   const stock = await stockImages(await openAsBlob(STOCK_ZIP));
   const gsi: Img = { name: "lineage-21.0-20260614-UNOFFICIAL-arm64_bvN.img", blob: new Blob(["gsi"]) };
@@ -156,7 +161,7 @@ test("dry run: flash-gsi.sh step for step", async () => {
   ]);
 });
 
-test("dry run: root.sh + flash-boot.sh step for step", async () => {
+test("dry run: root.sh + flash-boot.sh step for step", { skip: !HAVE_FW && "needs firmware/" }, async () => {
   const { ctx, lines } = dry();
   const apk: Img = { name: "Magisk-v30.7.apk", blob: await openAsBlob(MAGISK) };
   const pushed = (await magiskFiles(apk.blob)).map((f) => `adb push ${f.name} /data/local/tmp/magisk/${f.name}`);
@@ -185,7 +190,7 @@ test("dry run: root.sh + flash-boot.sh step for step", async () => {
   ]);
 });
 
-test("dry run: provision.sh step for step (no --config)", async () => {
+test("dry run: provision.sh step for step (no --config)", { skip: !HAVE_FW && "needs firmware/" }, async () => {
   const installed = ["com.android.launcher3", "org.lineageos.jelly", "com.android.systemui"];
   const { ctx, lines } = dry(installed);
   const files = {
@@ -228,3 +233,7 @@ test("dry run: provision.sh step for step (no --config)", async () => {
   ]);
 });
 
+
+test("the site's debloat list is the core repo's", { skip: !CORE && "needs the core repo" }, () => {
+  assert.equal(readFileSync(new URL("./debloat.txt", import.meta.url), "utf8"), readFileSync(join(REPO, "tools/debloat.txt"), "utf8"));
+});

@@ -1,5 +1,5 @@
 // The page: device mode, the wizard, logs, confirms, dry run. Steps live in *-steps.ts.
-import debloatText from "../../../tools/debloat.txt?raw";
+import debloatText from "./debloat.txt?raw";
 import { provision, root } from "./adb-steps.ts";
 import { type Ctx, Cancelled, dryAdb, dryFastboot, loggedAdb, loggedFastboot } from "./device.ts";
 import { flashGsi, unlock, unlockAbility } from "./fastboot-steps.ts";
