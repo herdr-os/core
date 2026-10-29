@@ -6,16 +6,16 @@ const harnesses = [
   { name: "Claude Code", sheep: "brand-claude", c: "var(--claude)", ink: "#141413", note: "Opus, Sonnet, Haiku" },
   { name: "Codex", sheep: "brand-codex", c: "var(--codex)", ink: "#0d0d0d", note: "GPT, any effort" },
   { name: "Pi", sheep: "brand-pi", c: "var(--pi)", ink: "#0b1a22", note: "Any provider" },
-  { name: "OpenCode", sheep: "brand-opencode", c: "var(--opencode)", ink: "#f1ecec", note: "Read from its own store" },
+  { name: "OpenCode", sheep: "brand-opencode", c: "var(--opencode)", ink: "#f1ecec", note: "Any model" },
 ];
 
 const chapters = [
   { n: "01", tag: "Glance", title: "It sleeps until someone needs you.", body: "The R1 rests on the lock screen with a quiet count of who is working. Wake it and the companion tells you, in one breath, what happened while you were away.", chips: ["Asleep", "Spoken briefing", "Pasture"], screens: ["asleep", "briefing", "pasture"] },
   { n: "02", tag: "Answer", title: "Every question arrives as the sheep that asked it.", body: "Approvals float above the agent in its own colors. Your choice glows orange, and the R1 names exactly where the answer goes before anything is sent.", chips: ["Sheep asks", "Bound to the question", "Touch approves"], screens: ["asks"] },
   { n: "03", tag: "Talk", title: "Hold the button. It answers out loud.", body: "Walkie-talkie mode gives each agent a channel on the wheel. Your voice goes out in orange; its reply fills the screen in its brand color and is spoken back to you.", chips: ["Push to talk", "Channels on the wheel", "Spoken replies"], screens: ["walkie-you", "walkie-it"] },
-  { n: "04", tag: "Show it", title: "Point at the whiteboard. The agent sees it.", body: "Snap a photo with the R1's camera. It lands on the agent's own machine, next to the code, and the agent reads it like any file.", chips: ["Camera", "Saved where the code is", "Thread"], screens: ["camera", "photo-sent", "thread"] },
-  { n: "05", tag: "Supervise", title: "Subagents, tasks and a live terminal.", body: "See every subagent's latest step, every background command's last lines, and the terminal itself, sanitized, scrollable on the wheel.", chips: ["Subagents", "Background tasks", "Ghostty terminal"], screens: ["subagents", "tasks", "terminal"] },
-  { n: "06", tag: "Steer", title: "Change models from your palm.", body: "Pick Opus, Sonnet or GPT and the effort to match. Herdr OS types the harness's own command, so nothing is faked. Or say a new task and choose who takes it.", chips: ["Model picker", "Effort", "New task"], screens: ["model", "new-task"] },
+  { n: "04", tag: "Show it", title: "Point at the whiteboard. The agent sees it.", body: "Some things are faster to show than to type. Snap a photo with the R1 and the agent gets it right away, ready to work from.", chips: ["Camera", "Straight to the agent", "Thread"], screens: ["camera", "photo-sent", "thread"] },
+  { n: "05", tag: "Supervise", title: "Check the work, not just the status.", body: "See what each helper agent is doing, what's still running, and the live terminal, all scrollable on the wheel. Know if it's on track before you're back at your desk.", chips: ["Helper agents", "Running tasks", "Live terminal"], screens: ["subagents", "tasks", "terminal"] },
+  { n: "06", tag: "Steer", title: "Hand out the next job from your palm.", body: "Say a new task and pick which agent takes it. Switch a stuck agent to a stronger model, or a simple one to a cheaper one, without touching a keyboard.", chips: ["Model picker", "Effort", "New task"], screens: ["model", "new-task"] },
 ];
 const screens = [...new Set(chapters.flatMap((c) => c.screens))];
 
@@ -31,16 +31,16 @@ import manifest from "../../public/downloads/manifest.json";
 const steps = [
   { where: "On the R1 and rabbit hole", time: "10 min", chrome: false, title: "Turn on developer mode and ask Rabbit to unlock", body: "In rabbit hole, under settings, r1, void the warranty to enable developer mode, then choose device modification, unlock. Rabbit's servers allow the unlock; nothing changes on the R1 yet." },
   { where: "", time: "2 min", chrome: true, title: "Unlock the bootloader", body: "Plug in the powered-off R1. The installer catches its preloader, puts it in fastboot and unlocks it. This wipes the R1." },
-  { where: "", time: "10 min", chrome: true, title: "Flash LineageOS", body: "Turns verified boot off, wipes data the way Rabbit's restore does, removes Rabbit's launcher partition and writes the LineageOS GSI to the active slot." },
-  { where: "", time: "3 min", chrome: true, title: "Root with Magisk", body: "Patches the R1's own boot image with Magisk, on the R1, and flashes it back. You get the unpatched image as a download, to undo it." },
-  { where: "", time: "3 min", chrome: true, title: "Install Herdr OS", body: "Installs the Magisk module and the app, makes Herdr OS the home screen, sets the R1's defaults and reboots into the asleep screen." },
-  { where: "On your computer", time: "5 min", chrome: false, title: "Run the bridge, scan the code", body: "Install the bridge where Herdr runs and start it; `herdr-bridge enroll --tailscale --qr` prints a code the R1 scans. Your speech key goes in on the R1, never through the website.", code: "npm i -g @herdr-os/bridge && herdr-bridge serve --tailscale" },
+  { where: "", time: "10 min", chrome: true, title: "Install a clean Android base", body: "Replaces Rabbit's software with LineageOS, an open version of Android that Herdr OS runs on." },
+  { where: "", time: "3 min", chrome: true, title: "Hand the R1 over to Herdr OS", body: "Gives Herdr OS control of the whole device, from the lock screen to the pull-down shade. You keep a copy of the original to undo it." },
+  { where: "", time: "3 min", chrome: true, title: "Install Herdr OS", body: "Installs Herdr OS, makes it the only home screen and restarts the R1 into it." },
+  { where: "On your computer", time: "5 min", chrome: false, title: "Connect it to your computer", body: "Install the small companion on the computer where your agents run and start it. It shows a code; scan it with the R1 and your herd appears.", code: "npm i -g @herdr-os/bridge && herdr-bridge serve --tailscale" },
 ];
 
 const sideways = [
   { img: "rate-limited", t: "Out of usage", d: "Wait for the reset, or finish on Sonnet with one confirmed tap." },
   { img: "context-full", t: "Context full", d: "Compact and keep going, before the agent forgets." },
-  { img: "host-down", t: "A host goes quiet", d: "Last known, never pretend-live. Everyone else is fine." },
+  { img: "host-down", t: "A host goes quiet", d: "You see what it was last doing, clearly marked. Everyone else carries on." },
   { img: "answered", t: "Already answered", d: "Someone got there first. Nothing is sent twice." },
 ];
 ---
@@ -50,11 +50,11 @@ const sideways = [
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Herdr OS · a herd in your hand</title>
-  <meta name="description" content="Herdr OS turns a Rabbit R1 into a pocket companion for the coding agents running on your machines: Claude Code, Codex, Pi and OpenCode." />
+  <meta name="description" content="A custom OS that turns a Rabbit R1 into a dedicated remote for your coding agents: see who is working, answer what is waiting and hand out the next task, away from your desk." />
   <meta name="theme-color" content="#000000" />
   <link rel="icon" href="/sheep/sheep-plain.svg" type="image/svg+xml" />
   <meta property="og:title" content="Herdr OS · a herd in your hand" />
-  <meta property="og:description" content="Glance at every coding agent, answer what's waiting and talk back, from a Rabbit R1." />
+  <meta property="og:description" content="Your coding agents keep working when you walk away. A Rabbit R1 running Herdr OS keeps you in the loop." />
   <meta property="og:image" content="/og/pasture.webp" />
 </head>
 <body>
@@ -71,13 +71,13 @@ const sideways = [
   <main id="top">
     <section class="wrap hero">
       <div>
-        <p class="mono kicker dim">Herdr OS · for the Rabbit R1</p>
+        <p class="mono kicker dim">A custom OS for the Rabbit R1</p>
         <h1 class="display" data-split>
           <span class="line">Your agents,</span>
           <span class="line">a herd in</span>
           <span class="line orange">your hand.</span>
         </h1>
-        <p class="lede" data-fade>Herdr OS turns a Rabbit R1 into a pocket companion for every Claude Code, Codex, Pi and OpenCode coding agent on your machines. Glance at the herd, answer what's waiting, and talk back, without opening a laptop.</p>
+        <p class="lede" data-fade>Your coding agents keep working when you walk away. Herdr OS turns a Rabbit R1 into the one device that keeps you in the loop: see who's busy, answer the moment one needs you, and give the next task out loud. No laptop, no phone full of notifications.</p>
         <div class="ctas" data-fade>
           <a class="pill orange" href="#journeys">See it move</a>
           <a class="pill ghost" href="#install">Set it up</a>
@@ -95,6 +95,16 @@ const sideways = [
         <img class="float-sheep" style="left:2%;bottom:-4%" src="/sheep/brand-opencode-sleep.svg" alt="" data-float />
       </div>
       <div class="scroll-cue mono dim"><span></span>Scroll</div>
+    </section>
+
+    <section class="wrap how why" aria-label="Why a whole OS">
+      <p class="mono orange">Why a whole OS</p>
+      <h2 class="display section-title" data-words>Not an app. A device with one job.</h2>
+      <div class="facts">
+        <div class="fact" data-rise><span class="mono orange">Single purpose</span><b>The R1 only does this.</b><p>Herdr OS replaces the R1's software end to end, from the lock screen to the pull-down shade. Nothing competes for your attention.</p></div>
+        <div class="fact" data-rise><span class="mono orange">Made for the hardware</span><b>Wheel, button, touch.</b><p>Roll through your agents with the wheel, hold the side button to talk, tap to approve. One hand, eyes mostly up.</p></div>
+        <div class="fact" data-rise><span class="mono orange">Always at hand</span><b>On the desk or in your pocket.</b><p>No buried notifications, no app to find. Pick it up and you know who needs you and what to do next.</p></div>
+      </div>
     </section>
 
     <section class="wrap herd">
@@ -117,7 +127,7 @@ const sideways = [
       <div class="stmt display" data-reveal>Orange is you.<small>Your voice, your attention, anything waiting on you. Nothing else is ever orange.</small></div>
       <div class="stmt display" data-reveal>Wheel moves. Button talks. Touch approves.<small>Three controls, three jobs, no overlap, so muscle memory never sends the wrong thing.</small></div>
       <div class="stmt display" data-reveal>A spoken yes never approves.<small>Voice drafts, a finger decides. The side button can't answer a question by accident.</small></div>
-      <div class="stmt display" data-reveal>No invented numbers.<small>Every model, token count and subagent comes from the agent's own session files. If nothing records it, the R1 doesn't show it.</small></div>
+      <div class="stmt display" data-reveal>If it doesn't know, it says so.<small>Everything on screen comes from the agents themselves. Nothing is guessed to fill a gap.</small></div>
     </section>
 
     <section class="journeys" id="journeys" data-journeys>
@@ -188,7 +198,7 @@ const sideways = [
 
     <section class="wrap how" id="how">
       <p class="mono orange">How it works</p>
-      <h2 class="display section-title" data-words>Your tailnet. Your bridge. No cloud in between.</h2>
+      <h2 class="display section-title" data-words>Private by design. No cloud in between.</h2>
       <div class="diagram-scroll"><svg class="diagram" viewBox="0 0 1200 300" role="img" aria-label="The R1 talks over Tailscale to a bridge on your computer, which reaches Herdr on every host over SSH">
         <path class="wire" id="w1" d="M210 150 C 330 150, 360 150, 480 150" />
         <path class="wire" id="w2" d="M720 150 C 820 150, 860 60, 960 60" />
@@ -204,9 +214,9 @@ const sideways = [
         <circle class="pulse" r="6" data-pulse="w1" /><circle class="pulse" r="5" data-pulse="w2" /><circle class="pulse" r="5" data-pulse="w3" /><circle class="pulse" r="5" data-pulse="w4" />
       </svg></div>
       <div class="facts">
-        <div class="fact" data-rise><span class="mono orange">Reads the source</span><b>Each harness's own files.</b><p>Model, effort, context, subagents, background commands and the conversation come from the session files and stores the agents already write.</p></div>
-        <div class="fact" data-rise><span class="mono orange">Answers are bound</span><b>To the exact question.</b><p>Every decision carries a fingerprint of what you were shown. If the agent moved on, a stale answer is refused, not delivered.</p></div>
-        <div class="fact" data-rise><span class="mono orange">Private by default</span><b>Nothing leaves your network.</b><p>The R1 pairs with a bridge you run, over your own Tailscale tailnet, with a one-time code and scoped tokens you can revoke.</p></div>
+        <div class="fact" data-rise><span class="mono orange">Works with what you use</span><b>Claude Code, Codex, Pi, OpenCode.</b><p>No plugins, no changes to how you work. Herdr OS follows what your agents already do and talks to them the way you would.</p></div>
+        <div class="fact" data-rise><span class="mono orange">Safe answers</span><b>Never approve the wrong thing.</b><p>Your answer only goes through if the agent is still asking the exact question you saw. If it moved on, nothing is sent.</p></div>
+        <div class="fact" data-rise><span class="mono orange">Private by default</span><b>Nothing leaves your network.</b><p>The R1 talks only to a small companion on your own computer, over your own private network. Pair it once with a code; unpair it any time.</p></div>
       </div>
     </section>
 
@@ -214,7 +224,7 @@ const sideways = [
       <div class="install-head">
         <p class="mono orange">From stock to herd</p>
         <h2 class="display section-title" data-words>Your R1, from the box to Herdr OS.</h2>
-        <p class="dim lede-sm">Six steps, about forty minutes. Chrome does the flashing for you over USB: plug the R1 in and follow the installer. It erases the R1 and voids Rabbit's warranty, so it says so before every step that does.</p>
+        <p class="dim lede-sm">About forty minutes, mostly waiting. Plug the R1 into a computer with Chrome and the installer does the work. It erases the R1 and voids Rabbit's warranty, and it tells you before every step that does.</p>
         <div class="ctas"><a class="pill orange" href="/install">Install from Chrome</a><a class="pill ghost" href="#downloads">Downloads</a></div>
       </div>
       <ol class="journey">
@@ -233,7 +243,7 @@ const sideways = [
       <div>
         <p class="mono orange">Downloads · <span class="dim">{manifest.version}</span></p>
         <h2 class="display section-title">Everything the installer sends.</h2>
-        <p class="dim lede-sm">The installer checks every file against these SHA-256 sums before it sends anything to your R1. Preview builds are signed with the developer's key; signed releases will update themselves.</p>
+        <p class="dim lede-sm">Prefer to do it by hand? These are the exact files the installer uses, each with a checksum so you know it arrived intact.</p>
       </div>
       <ul class="files">
         {manifest.files.map((f) => (
