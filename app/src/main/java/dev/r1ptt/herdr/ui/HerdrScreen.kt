@@ -47,6 +47,12 @@ abstract class HerdrScreen : DeviceActivity(), DictationTarget {
     /** Draws the screen from [herdr]'s state; called on start and on every herd change. */
     protected abstract fun render()
 
+    /** A named section in system traces (perfetto, `atrace`), so each screen's work shows by name. */
+    protected inline fun <T> traced(what: String, block: () -> T): T {
+        android.os.Trace.beginSection("${javaClass.simpleName}.$what")
+        try { return block() } finally { android.os.Trace.endSection() }
+    }
+
     /** Herdr OS's pull-down shade; off where it would show the herd to whoever holds the R1. */
     private val shade by lazy { Shade(this) }
     protected open val shadeAllowed = true
@@ -73,7 +79,7 @@ abstract class HerdrScreen : DeviceActivity(), DictationTarget {
             launch { herdr.version.collect {
                 // A revoked or unpaired R1 keeps nothing on screen: every page that shows host content closes.
                 shade.refresh()
-                if (!herdr.paired && this@HerdrScreen !is HerdActivity && this@HerdrScreen !is HerdrSettingsActivity && this@HerdrScreen !is SetupActivity && this@HerdrScreen !is MenuActivity) finish() else render()
+                if (!herdr.paired && this@HerdrScreen !is HerdActivity && this@HerdrScreen !is HerdrSettingsActivity && this@HerdrScreen !is SetupActivity && this@HerdrScreen !is MenuActivity) finish() else traced("render", ::render)
             } }
             launch { herdr.notices.collect { showToast(it.text) } }
             launch { app.turns.state.collect { t ->
@@ -109,7 +115,8 @@ abstract class HerdrScreen : DeviceActivity(), DictationTarget {
 
     // ---- push to talk: speech is only ever a draft here ----
 
-    private var resumedNow = false
+    protected var resumedNow = false
+        private set
     private var heard = ""
     private var stage: View? = null
     private var stageText: TextView? = null
@@ -118,7 +125,9 @@ abstract class HerdrScreen : DeviceActivity(), DictationTarget {
     protected open val listenPrompt = "Ask your herd anything."
 
     /** A finished transcript. Default: open it as a draft task for review; nothing is sent. */
-    protected open fun onDraft(text: String) {
+    protected open fun onDraft(text: String) = draft(text, sessionId)
+
+    internal fun draft(text: String, sessionId: String?) {
         startActivity(Intent(this, DelegateActivity::class.java).putExtra(DelegateActivity.EXTRA_TEXT, text).apply {
             sessionId?.let { putExtra(EXTRA_SESSION, it) }
         })
@@ -239,13 +248,13 @@ abstract class HerdrScreen : DeviceActivity(), DictationTarget {
         if (shade.isOpen) {
             if (event.keyCode == KeyEvent.KEYCODE_BACK) { if (event.action == KeyEvent.ACTION_UP) shade.close(); return true }
             if (WheelPolicy.isWheel(event.keyCode, event.scanCode, event.device?.name)) {
-                if (event.action == KeyEvent.ACTION_DOWN) shade.wheel(event.keyCode == KeyEvent.KEYCODE_VOLUME_DOWN || event.keyCode == KeyEvent.KEYCODE_DPAD_DOWN)
+                if (event.action == KeyEvent.ACTION_DOWN) { shade.wheel(event.keyCode == KeyEvent.KEYCODE_VOLUME_DOWN || event.keyCode == KeyEvent.KEYCODE_DPAD_DOWN); Motion.tick(window.decorView) }
                 return true
             }
         }
         if (!app.workspace.blocked && WheelPolicy.isWheel(event.keyCode, event.scanCode, event.device?.name) && !hasOpenDialog) {
             val down = event.keyCode == KeyEvent.KEYCODE_VOLUME_DOWN || event.keyCode == KeyEvent.KEYCODE_DPAD_DOWN
-            if (event.action == KeyEvent.ACTION_DOWN && onWheel(down)) return true
+            if (event.action == KeyEvent.ACTION_DOWN && onWheel(down)) { Motion.tick(window.decorView); return true }
             if (event.action == KeyEvent.ACTION_UP && wheelSteps) return true
         }
         return super.dispatchKeyEvent(event)
@@ -267,28 +276,34 @@ abstract class HerdrScreen : DeviceActivity(), DictationTarget {
     }
 
     /** Reports a receipt in plain words; accepted is the only status that claims success. */
-    protected fun receiptText(r: Receipt): String = when (r.status) {
+    internal fun receiptText(r: Receipt): String = when (r.status) {
         ReceiptStatus.ACCEPTED -> "Delivered. The host acknowledged it."
         ReceiptStatus.PENDING -> "Sent. Waiting for the host to acknowledge it."
         ReceiptStatus.REJECTED -> "Not sent. ${r.detail?.substringAfter(": ") ?: "The bridge refused it."}"
         ReceiptStatus.UNKNOWN -> "Delivery uncertain. It was not re-sent; check status before trying again."
     }
 
-    protected fun open(type: Class<*>, sessionId: String? = null) =
-        startActivity(Intent(this, type).apply { sessionId?.let { putExtra(EXTRA_SESSION, it) } })
+    /**
+     * Opens a screen; one that is a [Page] opens on the pasture, which comes forward to show it (and
+     * clears the screens above it, so Back from that page reopens this one unless it is finishing).
+     */
+    internal open fun open(type: Class<*>, sessionId: String? = null) = startActivity(
+        if (type in HerdActivity.PAGES) Intent(this, HerdActivity::class.java).putExtra(HerdActivity.EXTRA_PAGE, type.name)
+            .apply { sessionId?.let { putExtra(EXTRA_SESSION, it) }; if (!isFinishing) putExtra(HerdActivity.EXTRA_FROM, this@HerdrScreen.javaClass.name) }
+        else Intent(this, type).apply { sessionId?.let { putExtra(EXTRA_SESSION, it) } })
 
     protected val sessionId: String? get() = intent.getStringExtra(EXTRA_SESSION)
     protected val agent: Agent? get() = sessionId?.let(herdr.state::agent)
 
     /** "Live", or how old the cards are when they are not. */
-    protected fun linkLabel(): String {
+    internal fun linkLabel(): String {
         val s = herdr.state
         if (s.link == Link.LIVE || s.link == Link.UNPAIRED) return s.link.label
         val age = s.syncedAt?.let { runCatching { Duration.between(Instant.parse(it), Instant.now()) }.getOrNull() }
         return "${s.link.label}${age?.let { " · synced ${ago(it)}" } ?: ""}"
     }
 
-    protected fun linkView(): TextView = ui.mono(linkLabel(), if (herdr.state.link == Link.LIVE) R.color.ok else R.color.dim, 11f).apply {
+    internal fun linkView(): TextView = ui.mono(linkLabel(), if (herdr.state.link == Link.LIVE) R.color.ok else R.color.dim, 11f).apply {
         setCompoundDrawablesRelativeWithIntrinsicBounds(ui.dot(if (herdr.state.link == Link.LIVE) R.color.ok else R.color.faint, 7), null, null, null)
         compoundDrawablePadding = ui.dp(6)
         accessibilityLiveRegion = View.ACCESSIBILITY_LIVE_REGION_POLITE

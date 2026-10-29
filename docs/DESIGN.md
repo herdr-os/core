@@ -77,13 +77,26 @@ replaces the notification shade. Still stock: the keyboard and Android's Wi-Fi p
 
 ## Motion
 
-- Wheel: the new front sheep steps forward 14 design px over 180 ms.
-- Listening: holding the side button covers the screen with "Listening" and the live words.
-- Stale data: sheep dim and their state reads "Last known"; nothing pretends to be running.
-- The sky follows the clock (dawn, day, dusk, night). Sheep colors and orange never change with it.
-- Everything uses the platform animator, so Android's "Remove animations" turns it off.
+All of it lives in `herdr/ui/Motion.kt`, so every screen moves the same way. Durations are written
+for the R1's 0.5 animator scale; Android's "Remove animations" and haptics settings still apply.
 
-The model, subagents, background commands and usage limits come from each harness's own session
-file, which the bridge reads on the agent's machine (`bridge/src/insight/`). Left out because no
-source records them: progress bars, per-subagent messaging (messages go to the lead), handing a
-task to another harness, usage meters, scheduled updates, and the Android boot animation.
+- **Wheel:** every detent a screen uses ticks under the thumb. On the pasture the herd walks to its
+  new places (each sheep springs from where it stood); a sheep new to the field pops in.
+- **Touch:** pills, tiles, shortcuts, toggles and menu rows sink a little and spring back, with a
+  click. A sent answer gives a firmer confirmation.
+- **Screens:** a new screen rises in while the one underneath settles back; Back reverses it. A sheep
+  you tap walks forward as the field dims under a single veil.
+- **Arrivals:** menu and inbox rows rise in once when the screen opens; new chat bubbles slide in
+  from their speaker's side. The shade follows the finger and opens past halfway.
+- **Never idle:** nothing animates while nothing changes. Endless animations run only while their
+  view is on screen (an orphaned one cost 56 callbacks a second, unseen).
+- **State:** a new question makes its sheep hop once; a sheep that finishes dozes off; stale data
+  dims and reads "Last known". Sheep colors and orange never change with the sky.
+
+Agent, Message and Decision are pages (`herdr/ui/Page.kt`) stacked on the pasture in its own
+window, not activities: opening one swaps a view instead of creating a window, which was most of the
+remaining jank. Their old activity names start the pasture with the page on top, so links and
+notifications still land; Back from such a page returns to the screen that opened it.
+
+`tools/r1-perf.sh [runs] [--warm]` measures frame times on a connected R1 over one scripted pass;
+screens have named trace sections (`HerdActivity.render`, `.sheep`, `.header`…) for perfetto.

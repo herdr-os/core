@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="Theme.R1" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:windowAnimationStyle">@style/R1.WindowAnimation</item>
         <item name="android:windowBackground">@color/bg</item>
         <item name="android:colorBackground">@color/field</item>
         <item name="android:colorAccent">@color/accent</item>
@@ -19,6 +20,14 @@
         <item name="android:alertDialogTheme">@style/Theme.R1.Dialog</item>
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowLightNavigationBar">false</item>
+    </style>
+
+    <!-- Screens rise in and drop away, in place of Android's stock transitions. -->
+    <style name="R1.WindowAnimation" parent="@android:style/Animation.Activity">
+        <item name="android:activityOpenEnterAnimation">@anim/herdr_open_enter</item>
+        <item name="android:activityOpenExitAnimation">@anim/herdr_open_exit</item>
+        <item name="android:activityCloseEnterAnimation">@anim/herdr_close_enter</item>
+        <item name="android:activityCloseExitAnimation">@anim/herdr_close_exit</item>
     </style>
 
     <style name="Theme.R1.Dialog" parent="@android:style/Theme.Material.Dialog.Alert">

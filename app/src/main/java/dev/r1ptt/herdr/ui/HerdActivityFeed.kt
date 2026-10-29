@@ -27,6 +27,8 @@ class HerdActivityFeed : HerdrScreen() {
         io({ it.feed(40) }) { events = it; render() }
     }
 
+    private var arrived = false
+
     override fun render() {
         val open = herdr.state.deck.filter { it.state.needsYou && !it.stale }
         val list = events
@@ -64,6 +66,8 @@ class HerdActivityFeed : HerdrScreen() {
         val scroll = ScrollView(this).apply { isFillViewport = true; isVerticalScrollBarEnabled = false; addView(body) }
         wheelScrollTarget = scroll
         setContentView(scroll)
+        // Rows rise in when the inbox opens; later refreshes just update.
+        if (!arrived) { arrived = true; Motion.arrive(body, from = 1) }
     }
 
     /** An agent waiting on you, in a card, with the orange dot that says it is yours to answer. */

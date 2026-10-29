@@ -9,20 +9,25 @@ import dev.r1ptt.R
 import dev.r1ptt.herdr.model.Agent
 import dev.r1ptt.herdr.model.HerdEvent
 import dev.r1ptt.herdr.model.Insight
+import dev.r1ptt.herdr.ui.HerdrScreen.Companion.EXTRA_SESSION
+import dev.r1ptt.herdr.ui.HerdrScreen.Companion.shortPath
+import dev.r1ptt.herdr.ui.HerdrScreen.Companion.stateLine
+import dev.r1ptt.herdr.ui.HerdrScreen.Companion.who
+
+class AgentActivity : PageTrampoline()
 
 /**
  * One agent at a glance: its card, what it last did, and the ways in (decision, message,
- * terminal, changes). The deck holds this card's place while it is open.
+ * terminal, changes). The pasture holds this sheep's place while it is open.
  */
-class AgentActivity : HerdrScreen() {
+class AgentPage(host: HerdActivity, sessionId: String?) : Page(host, sessionId) {
     private var events: List<HerdEvent>? = null
     private var insight: Insight? = null
     private var shownKey = ""
 
     override val listenPrompt get() = "Tell ${agent?.displayName ?: "this agent"} what to do."
 
-    override fun onResume() {
-        super.onResume()
+    override fun onShow() {
         herdr.state.held = sessionId
         val id = sessionId ?: return
         // Reading the session is what tells the bridge a finished card has been seen.
@@ -31,9 +36,8 @@ class AgentActivity : HerdrScreen() {
         io({ runCatching { it.insight(id) }.getOrNull() }) { insight = it; shownKey = ""; render() }
     }
 
-    override fun onPause() {
+    override fun onHide() {
         if (herdr.state.held == sessionId) herdr.state.held = null
-        super.onPause()
     }
 
     override fun render() {
@@ -42,14 +46,14 @@ class AgentActivity : HerdrScreen() {
         if (key == shownKey) return
         shownKey = key
         val page = ui.page(a?.let(::who) ?: "Agent") { finish() }
-        wheelScrollTarget = page.scroll
+        scrollTarget = page.scroll
         if (a == null) {
             page.body.addView(ui.text("This agent is no longer reported by its machine."))
             setContentView(page.root)
             return
         }
         page.body.addView(glance(a))
-        trouble(this, d, a, insight, { remedy(a, it) }, { open(TerminalActivity::class.java, a.sessionId) }) { finish() }?.let(page.body::addView)
+        trouble(context, d, a, insight, { remedy(a, it) }, { open(TerminalActivity::class.java, a.sessionId) }) { finish() }?.let(page.body::addView)
         page.body.addView(linkView().apply { setPadding(ui.dp(4), ui.dp(4), 0, ui.dp(10)) })
         val approval = herdr.state.approval(a.pendingApprovalId)
         if (approval != null && !a.stale)
@@ -63,7 +67,7 @@ class AgentActivity : HerdrScreen() {
             ui.navTile("Changes", R.drawable.ic_chip, "Review the diff") { open(ChangesActivity::class.java, a.sessionId) },
             ui.navTile("Files", R.drawable.ic_more, "Browse the repository") { open(FilesActivity::class.java, a.sessionId) },
             ui.navTile("Stop", R.drawable.ic_stop, "Interrupt the agent") { confirmStop(a) },
-        )))
+        ).onEach { Motion.press(it) }))
         page.body.work(insight)
         page.body.addView(ui.section("Activity"))
         val list = events
@@ -75,10 +79,8 @@ class AgentActivity : HerdrScreen() {
         setContentView(page.root)
     }
 
-    private val d by lazy { Design(this) }
-
     /** The agent's sheep beside who it is and what it is doing, in words. */
-    private fun glance(a: Agent) = LinearLayout(this).apply {
+    private fun glance(a: Agent) = LinearLayout(context).apply {
         val h = Harness.of(a.kind)
         gravity = Gravity.CENTER_VERTICAL
         if (a.stale) alpha = .6f
@@ -123,11 +125,11 @@ class AgentActivity : HerdrScreen() {
         shown.forEach { addView(workRow(it, it in i.subagents)) }
     }
 
-    private fun workRow(w: Insight.Work, subagent: Boolean) = LinearLayout(this).apply {
+    private fun workRow(w: Insight.Work, subagent: Boolean) = LinearLayout(context).apply {
         gravity = Gravity.CENTER_VERTICAL
         minimumHeight = d.px(56)
         isClickable = true
-        setOnClickListener { startActivity(android.content.Intent(context, WorkActivity::class.java).putExtra(EXTRA_SESSION, sessionId).putExtra(WorkActivity.EXTRA_TASKS, !subagent)) }
+        setOnClickListener { context.startActivity(android.content.Intent(context, WorkActivity::class.java).putExtra(EXTRA_SESSION, sessionId).putExtra(WorkActivity.EXTRA_TASKS, !subagent)) }
         setPadding(ui.dp(4), ui.dp(6), ui.dp(4), ui.dp(6))
         val tint = when { w.running -> R.color.fg; w.state == "failed" -> R.color.error; else -> R.color.dim }
         addView(d.text(w.state.uppercase(), 13, tint, 600, mono = true), LinearLayout.LayoutParams(d.px(96), -2))
@@ -135,7 +137,7 @@ class AgentActivity : HerdrScreen() {
         addView(d.text(if (subagent) w.kind ?: "agent" else "bash", 13, R.color.dim, 500, mono = true))
     }
 
-    private fun eventRow(e: HerdEvent) = LinearLayout(this).apply {
+    private fun eventRow(e: HerdEvent) = LinearLayout(context).apply {
         gravity = Gravity.CENTER_VERTICAL
         setPadding(ui.dp(4), ui.dp(6), ui.dp(4), ui.dp(6))
         val what = e.payload.optString("summary").ifBlank { e.payload.optString("kind").ifBlank { e.type.substringAfter('.') } }
@@ -146,7 +148,7 @@ class AgentActivity : HerdrScreen() {
 
     /** A fix from [trouble]: confirmed by touch, then its messages in order, stopping at the first that is refused or lost. */
     private fun remedy(a: Agent, r: Remedy) {
-        showDeviceDialog(AlertDialog.Builder(this).setMessage(r.confirm).setNegativeButton("Cancel", null)
+        showDeviceDialog(AlertDialog.Builder(context).setMessage(r.confirm).setNegativeButton("Cancel", null)
             .setPositiveButton("Send") { _, _ ->
                 io({ c -> r.messages.fold(null as dev.r1ptt.herdr.model.Receipt?) { last, text ->
                     if (last != null && (last.status == dev.r1ptt.herdr.model.ReceiptStatus.REJECTED || last.status == dev.r1ptt.herdr.model.ReceiptStatus.UNKNOWN)) last else if (text.startsWith("/model ")) c.claudeModel(a.sessionId, text.removePrefix("/model "), a.generation) else c.message(a.sessionId, text, a.generation)
@@ -155,7 +157,7 @@ class AgentActivity : HerdrScreen() {
     }
 
     private fun confirmStop(a: Agent) {
-        showDeviceDialog(AlertDialog.Builder(this)
+        showDeviceDialog(AlertDialog.Builder(context)
             .setTitle("Stop ${a.displayName}?")
             .setMessage("Sends Esc to ${a.displayName} on ${a.machineLabel} (${a.project}). The agent decides how to stop.")
             .setNegativeButton("Cancel", null)

@@ -26,26 +26,106 @@ class HerdActivity : HerdrScreen() {
     private var selected: String? = null
     private var shownKey = ""
     private var front: View? = null
+    /** Each sheep's view on the field this render, by session, so the next can move them (see [herdMoves]). */
+    private var sheepViews = mutableMapOf<String, View>()
+    private var moveHerd = false
     /** What the last render showed, so motion plays once on a change and never on a plain redraw. */
     private var lastStates = emptyMap<String, AgentState>()
     private val bounced = mutableSetOf<String>()
     private var wasFolded = true
     /** The host whose flock is open as its own field, or null for the whole herd. */
     private var pen: String? = null
-    override val wheelSteps = true
+    override val wheelSteps get() = topPage()?.wheelSteps ?: true
+
+    // The pasture draws into its own layer; pages ([Page]) stack above it in the same window.
+    private val pastureLayer by lazy { FrameLayout(this) }
+    private val pageLayer by lazy { FrameLayout(this) }
+    private val pages = mutableListOf<Page>()
 
     override fun onCreate(savedInstanceState: android.os.Bundle?) {
         super.onCreate(savedInstanceState)
         home = java.lang.ref.WeakReference(this)
+        setContentView(FrameLayout(this).apply {
+            addView(pastureLayer, FrameLayout.LayoutParams(-1, -1))
+            addView(pageLayer, FrameLayout.LayoutParams(-1, -1))
+        })
         SetupActivity.firstRun(this)
+        openFrom(intent)
     }
 
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        openFrom(intent)
+    }
+
+    /** Another screen asked for a page (see [HerdrScreen.open]): show it on top of whatever is here. */
+    private fun openFrom(intent: android.content.Intent?) {
+        val name = intent?.getStringExtra(EXTRA_PAGE) ?: return
+        intent.removeExtra(EXTRA_PAGE)
+        PAGES.keys.firstOrNull { it.name == name }?.let { openPage(it, intent.getStringExtra(EXTRA_SESSION), intent.extras ?: android.os.Bundle.EMPTY) }
+    }
+
+    fun topPage(): Page? = pages.lastOrNull()
+
+    override fun open(type: Class<*>, sessionId: String?) =
+        if (type in PAGES) openPage(type, sessionId, android.os.Bundle.EMPTY) else super.open(type, sessionId)
+
+    /** Pages are shown and hidden only while the pasture itself is in front; [onResume] and [onPause] cover the rest. */
+    private fun openPage(type: Class<*>, sessionId: String?, args: android.os.Bundle) {
+        val page = PAGES.getValue(type)(this, sessionId).also { it.args = args }
+        val below = topPage()
+        if (resumedNow) below?.onHide()
+        pages += page
+        pageLayer.addView(page.frame, FrameLayout.LayoutParams(-1, -1))
+        page.render()
+        if (resumedNow) page.onShow()
+        wheelScrollTarget = page.scrollTarget
+        // It rises in over a veil on what was showing; the pasture stops drawing once it is covered.
+        page.frame.translationY = page.frame.resources.displayMetrics.heightPixels * .06f
+        page.frame.alpha = 0f
+        page.frame.animate().translationY(0f).alpha(1f).setDuration(320).setInterpolator(android.view.animation.DecelerateInterpolator(2f))
+            .withEndAction { if (topPage() === page) { (below?.frame ?: pastureLayer).visibility = View.INVISIBLE } }.start()
+    }
+
+    /** Back from [page]: the one below comes forward again as it drops away. */
+    fun closePage(page: Page) {
+        if (topPage() !== page) return
+        pages.removeAt(pages.lastIndex)
+        if (resumedNow) page.onHide()
+        val below = topPage()
+        (below?.frame ?: pastureLayer).visibility = View.VISIBLE
+        wheelScrollTarget = below?.scrollTarget
+        below?.let { it.render(); if (resumedNow) it.onShow() } ?: run { shownKey = ""; render() }
+        // The screen it was opened from was cleared to bring the pasture forward; Back goes there again.
+        if (below == null) page.args.getString(EXTRA_FROM)?.let { from ->
+            startActivity(android.content.Intent(this, Class.forName(from)).apply { page.sessionId?.let { putExtra(EXTRA_SESSION, it) } })
+            @Suppress("DEPRECATION") overridePendingTransition(R.anim.herdr_close_enter, R.anim.herdr_close_exit)
+        }
+        page.frame.animate().translationY(page.frame.height * .06f).alpha(0f).setDuration(240)
+            .setInterpolator(android.view.animation.AccelerateInterpolator(2f))
+            .withEndAction { pageLayer.removeView(page.frame); page.destroy() }.start()
+    }
+
+    override val listenPrompt get() = topPage()?.listenPrompt ?: "Ask your herd anything."
+    override val sendsTo get() = topPage()?.sendsTo
+    override fun onDraft(text: String) { topPage()?.onDraft(text) ?: draft(text, null) }
+
+    override fun onResume() { super.onResume(); topPage()?.onShow() }
+    override fun onPause() { topPage()?.onHide(); super.onPause() }
+
     override fun onDestroy() {
+        pages.forEach { it.destroy() }
         if (home.get() === this) { app.turns.detachTarget(this); home = java.lang.ref.WeakReference(null) }
         super.onDestroy()
     }
 
     override fun render() {
+        renderPasture()
+        topPage()?.render()
+    }
+
+    private fun renderPasture() {
         val s = herdr.state
         if (s.link == Link.LIVE) lastKnown = false
         hidden.retainAll(s.machines.filter { !it.connected }.map { it.label }.toSet())
@@ -54,15 +134,15 @@ class HerdActivity : HerdrScreen() {
         val deck = pen?.let { h -> herd.filter { it.machineLabel == h } } ?: herd
         if (selected !in deck.map { it.sessionId }) selected = deck.firstOrNull()?.sessionId
         val now = LocalTime.now()
-        val battery = battery()
+        val battery = traced("battery") { battery() }
         val key = listOf(pen, s.link, s.syncedAt.takeIf { s.link != Link.LIVE }, selected, herdr.problem, herdr.paired, Daylight.at(now), s.machines, hidden, lastKnown, battery,
-            deck.joinToString { "${it.sessionId}${it.state}${it.stale}${it.summary}${it.pendingApprovalId}" }).joinToString("|")
+            deck.joinToString { "${it.sessionId}${it.state}${it.stale}${it.pendingApprovalId}" }).joinToString("|")
         if (key == shownKey) return
         shownKey = key
 
         val pasture = pen?.let { PastureModel.pen(deck, selected, now) } ?: PastureModel.of(deck, selected, now, s.machines)
         val root = FrameLayout(this)
-        root.addView(FieldView(this, pasture.daylight, bare = !herdr.paired || deck.isEmpty() && s.link != Link.LIVE), FrameLayout.LayoutParams(-1, -1))
+        traced("field") { root.addView(FieldView(this, pasture.daylight, bare = !herdr.paired || deck.isEmpty() && s.link != Link.LIVE), FrameLayout.LayoutParams(-1, -1)) }
         var headline = deck.isNotEmpty()
         var status = true
         when {
@@ -71,14 +151,18 @@ class HerdActivity : HerdrScreen() {
             s.link != Link.LIVE && herdr.problem != null && !lastKnown -> { headline = false; cantReach(root, deck) }
             deck.isEmpty() -> return boot()
             battery != null && deck.none { it.state.needsYou && !it.stale } -> { headline = false; status = false; sleepy(root, battery) }
-            pasture.folded -> flocks(root, pasture)
-            else -> field(root, pasture)
+            pasture.folded -> traced("flocks") { flocks(root, pasture) }
+            else -> traced("sheep") { field(root, pasture) }
         }
-        if (status) root.addView(header(pasture, deck, headline), FrameLayout.LayoutParams(-1, -2).apply { setMargins(d.px(26), d.px(22), d.px(26), 0) })
+        if (status) traced("header") { root.addView(header(pasture, deck, headline), FrameLayout.LayoutParams(-1, -2).apply { setMargins(d.px(26), d.px(22), d.px(26), 0) }) }
         lastStates = deck.associate { it.sessionId to it.state }
         wasFolded = pasture.folded
         if (headline && (pasture.folded || pasture.sheep.isNotEmpty())) root.addView(hints(), FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM).apply { setMargins(d.px(26), 0, d.px(26), d.px(20)) })
-        setContentView(root)
+        val before = sheepViews.mapValues { (_, v) -> floatArrayOf(v.left.toFloat(), v.top.toFloat(), v.width.toFloat()) }
+        sheepViews = fresh
+        fresh = mutableMapOf()
+        traced("setContentView") { showPasture(root) }
+        if (moveHerd) { moveHerd = false; herdMoves(root, before) }
     }
 
     /** Hosts the user hid while they are down; they come back when the host does. */
@@ -149,21 +233,26 @@ class HerdActivity : HerdrScreen() {
         val a = placed.agent
         val slot = placed.slot
         dozeOff(root, a, slot)
-        root.addView(sheepImage(a).apply {
+        root.addView(sheepImage(a).also { fresh[a.sessionId] = it }.apply {
             if (slot.size < 60) alpha = alpha * .8f
             contentDescription = "${Harness.of(a.kind).label} on ${a.machineLabel}, ${stateLine(a)}"
-            setOnClickListener { selected = a.sessionId; render() }
+            setOnClickListener { selected = a.sessionId; moveHerd = true; Motion.tick(this); render() }
         }, at(slot.x, slot.y, slot.size, slot.size))
         if (slot.size >= 70) {
-            val chip = d.text("${Harness.of(a.kind).label.substringBefore(' ').uppercase()} · ${a.state.label.uppercase()}", 13, R.color.dim, 600, mono = true).apply {
+            val chip = d.text("${place(a).uppercase()} · ${a.state.label.uppercase()}", 13, R.color.dim, 600, mono = true).apply {
                 background = d.fill(R.color.field, 14)
                 setPadding(d.px(9), d.px(5), d.px(9), d.px(5))
                 maxLines = 1
+                ellipsize = TextUtils.TruncateAt.END
+                maxWidth = d.px(190)
                 importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
             }
             root.addView(chip, FrameLayout.LayoutParams(-2, -2).apply { leftMargin = d.px((slot.x + slot.size / 2 - 60).coerceIn(12, 340)); topMargin = d.px(slot.y + slot.size + 2) })
         }
     }
+
+    /** What a sheep is called on the field: its Herdr name if you gave it one, else its workspace; the sheep itself shows the harness. */
+    private fun place(a: Agent) = pretty(who(a).takeUnless { it == Harness.of(a.kind).label } ?: a.project.ifBlank { who(a) })
 
     private fun focused(root: FrameLayout, a: Agent) {
         val h = Harness.of(a.kind)
@@ -176,14 +265,16 @@ class HerdActivity : HerdrScreen() {
         val sheep = sheepImage(a).apply {
             contentDescription = "${h.label} on ${a.machineLabel}. ${stateLine(a)}. Tap to open."
             setOnClickListener { walkIn(root, this, a) }
+            Motion.press(this, depth = 0.94f)
         }
         root.addView(sheep, at(slot.x, slot.y, slot.size, slot.size))
+        fresh[a.sessionId] = sheep
         front = sheep
         dozeOff(root, a, slot)
         root.addView(LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER_HORIZONTAL
-            addView(d.text(who(a), 22, R.color.fg, 700).apply { gravity = Gravity.CENTER })
+            addView(d.text(place(a), 22, R.color.fg, 700).apply { gravity = Gravity.CENTER; maxLines = 1; ellipsize = TextUtils.TruncateAt.END })
             addView(d.text("${a.machineLabel.uppercase()} · ${stateLine(a).uppercase()}", 13, R.color.dim, 500, mono = true).apply {
                 gravity = Gravity.CENTER; maxLines = 1; ellipsize = TextUtils.TruncateAt.END; setPadding(0, d.px(4), 0, 0)
             })
@@ -203,7 +294,12 @@ class HerdActivity : HerdrScreen() {
     }
 
     private fun walkIn(root: FrameLayout, sheep: View, a: Agent) {
-        for (i in 0 until root.childCount) root.getChildAt(i).takeIf { it !== sheep }?.animate()?.alpha(0f)?.setDuration(260)?.start()
+        // One black veil fades over the field: fading every layer with alpha forces offscreen
+        // passes (35–55 ms frames on the R1); a solid veil costs almost nothing.
+        val veil = View(this).apply { setBackgroundColor(getColor(R.color.bg)); alpha = 0f }
+        root.addView(veil, FrameLayout.LayoutParams(-1, -1))
+        sheep.bringToFront()
+        veil.animate().alpha(1f).setDuration(260).start()
         sheep.animate().translationX(-d.px(120).toFloat()).translationY(d.px(110).toFloat()).scaleX(1.3f).scaleY(1.3f).setDuration(260)
             .withEndAction { a.open(); @Suppress("DEPRECATION") overridePendingTransition(0, 0); shownKey = ""; root.postDelayed({ render() }, 400) }.start()
     }
@@ -328,7 +424,7 @@ class HerdActivity : HerdrScreen() {
 
     /** Connecting with nothing cached yet: the boot screen, until the first snapshot lands. */
     private fun boot() {
-        setContentView(FrameLayout(this).apply {
+        showPasture(FrameLayout(this).apply {
             setBackgroundColor(getColor(R.color.bg))
             addView(LinearLayout(context).apply {
                 orientation = LinearLayout.VERTICAL
@@ -343,10 +439,15 @@ class HerdActivity : HerdrScreen() {
                     addView(bar, FrameLayout.LayoutParams(d.px(54), -1))
                     importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
                 }, LinearLayout.LayoutParams(d.px(120), d.px(3)))
-                // No real progress to report, so the bar sweeps instead of filling.
-                android.animation.ObjectAnimator.ofFloat(bar, View.TRANSLATION_X, 0f, d.px(66).toFloat()).apply {
-                    duration = 900; repeatMode = android.animation.ValueAnimator.REVERSE; repeatCount = android.animation.ValueAnimator.INFINITE; start()
+                // No real progress to report, so the bar sweeps instead of filling, only while it is on
+                // screen: an endless animator left running after the splash goes ticks every frame, unseen.
+                val sweep = android.animation.ObjectAnimator.ofFloat(bar, View.TRANSLATION_X, 0f, d.px(66).toFloat()).apply {
+                    duration = 900; repeatMode = android.animation.ValueAnimator.REVERSE; repeatCount = android.animation.ValueAnimator.INFINITE
                 }
+                bar.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
+                    override fun onViewAttachedToWindow(v: View) = sweep.start()
+                    override fun onViewDetachedFromWindow(v: View) = sweep.cancel()
+                })
                 addView(d.text("WAKING THE HERD", 14, R.color.dim, 500, mono = true).apply { gravity = Gravity.CENTER; letterSpacing = .12f; setPadding(0, d.px(26), 0, 0); accessibilityLiveRegion = View.ACCESSIBILITY_LIVE_REGION_POLITE })
             }, FrameLayout.LayoutParams(-1, -2, Gravity.CENTER).apply { bottomMargin = d.px(60) })
         })
@@ -385,27 +486,78 @@ class HerdActivity : HerdrScreen() {
 
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
-        // This is the home screen: Back only closes an open flock.
-        if (pen != null) leavePen()
+        // This is the home screen: Back closes the page on top, else an open flock.
+        topPage()?.let { if (!it.onBack()) closePage(it) } ?: run { if (pen != null) leavePen() }
     }
+
+    private fun showPasture(view: View) {
+        pastureLayer.removeAllViews()
+        pastureLayer.addView(view, FrameLayout.LayoutParams(-1, -1))
+    }
+
+    private var fresh = mutableMapOf<String, View>()
+
+    /**
+     * The herd walks to its new places instead of jumping: each sheep starts where it stood before
+     * the wheel step and springs into its new slot; one that just arrived on the field pops in.
+     * [before] is each sheep's old left, top and width on the field.
+     */
+    private fun herdMoves(root: FrameLayout, before: Map<String, FloatArray>) = root.doOnLaidOut {
+        for ((id, v) in sheepViews) {
+            val was = before[id]
+            if (was == null || v.width == 0) {
+                v.scaleX = 0f; v.scaleY = 0f; v.pivotY = v.height.toFloat()
+                v.animate().scaleX(1f).scaleY(1f).setDuration(420).setInterpolator(android.view.animation.OvershootInterpolator(2.4f)).start()
+                continue
+            }
+            val k = was[2] / v.width
+            v.pivotX = 0f; v.pivotY = 0f
+            v.translationX = was[0] - v.left; v.translationY = was[1] - v.top; v.scaleX = k; v.scaleY = k
+            v.animate().translationX(0f).translationY(0f).scaleX(1f).scaleY(1f).setDuration(380)
+                .setInterpolator(android.view.animation.OvershootInterpolator(1.2f)).start()
+        }
+    }
+
+    /** Runs [block] once the view has its new layout, before that frame is drawn. */
+    private fun View.doOnLaidOut(block: () -> Unit) = viewTreeObserver.addOnPreDrawListener(object : android.view.ViewTreeObserver.OnPreDrawListener {
+        override fun onPreDraw(): Boolean { viewTreeObserver.removeOnPreDrawListener(this); block(); return true }
+    })
 
     private fun leavePen() { pen = null; wasFolded = true; render() }
 
     override fun onWheel(down: Boolean): Boolean {
+        topPage()?.let { return it.onWheel(down) }
         val deck = herdr.state.deck.filter { pen == null || it.machineLabel == pen }
         if (deck.size < 2) return deck.isNotEmpty()
         val i = deck.indexOfFirst { it.sessionId == selected }.coerceAtLeast(0)
         selected = deck[(i + if (down) 1 else -1).mod(deck.size)].sessionId
+        moveHerd = true
         render()
-        // The new sheep steps forward. The system animator scale turns it off for reduced motion.
-        front?.apply { translationY = d.px(if (down) 14 else -14).toFloat(); animate().translationY(0f).setDuration(180).start() }
         return true
     }
 
     companion object {
+        const val EXTRA_PAGE = "herdr.page"
+        const val EXTRA_FROM = "herdr.page.from"
+
+        /** Screens that open as pages on the pasture rather than as activities of their own. */
+        val PAGES: Map<Class<*>, (HerdActivity, String?) -> Page> = mapOf(
+            AgentActivity::class.java to ::AgentPage,
+            ThreadActivity::class.java to ::ThreadPage,
+            DecisionActivity::class.java to ::DecisionPage,
+        )
+
         private const val LOW_BATTERY = 15
         private var home = java.lang.ref.WeakReference<HerdActivity>(null)
         /** The home pasture while it exists; the push-to-talk target whenever no other Herdr screen is in front. */
         val live: HerdActivity? get() = home.get()?.takeUnless { it.isDestroyed }
     }
 }
+
+/**
+ * A folder-style name read as words: "herdr-os" is "Herdr OS", "lab_claude" is "Lab Claude".
+ * ponytail: words of one or two letters read as initials (OS, UI); a real "of" would shout.
+ */
+fun pretty(name: String) = name.split(Regex("[-_.\\s]+")).filter(String::isNotEmpty)
+    .joinToString(" ") { if (it.length <= 2) it.uppercase() else it.replaceFirstChar(Char::uppercase) }
+    .ifEmpty { name }

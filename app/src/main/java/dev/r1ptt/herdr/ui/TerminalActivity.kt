@@ -109,8 +109,8 @@ class TerminalActivity : HerdrScreen() {
             clipToPadding = false
             isVerticalScrollBarEnabled = false
             addView(output)
-            post { fullScroll(ScrollView.FOCUS_DOWN) }
         }
+        toEnd()
         wheelScrollTarget = if (interactive) null else scroll
         root.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f).apply { topMargin = d.px(12); bottomMargin = d.px(12) })
         status = d.text("", 14, R.color.dim, 600, mono = true).apply { maxLines = 1 }
@@ -160,6 +160,18 @@ class TerminalActivity : HerdrScreen() {
         setSpan(ForegroundColorSpan(getColor(R.color.dim)), key.length, length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
     }
 
+    /**
+     * Scrolls to the newest line once the new text has been laid out, just before it is drawn. A
+     * plain post runs before layout and lands on the old bottom.
+     */
+    private fun toEnd() = scroll.viewTreeObserver.addOnPreDrawListener(object : android.view.ViewTreeObserver.OnPreDrawListener {
+        override fun onPreDraw(): Boolean {
+            scroll.viewTreeObserver.removeOnPreDrawListener(this)
+            scroll.scrollTo(0, output.height)
+            return true
+        }
+    })
+
     /** One key into the pane; only a failure is worth a toast. */
     private fun press(key: String) {
         val a = agent ?: return
@@ -172,11 +184,13 @@ class TerminalActivity : HerdrScreen() {
         val client = herdr.client() ?: return
         runCatching { withContext(Dispatchers.IO) { client.terminal(id) } }
             .onSuccess { t ->
-                val atEnd = !scroll.canScrollVertically(1)
+                // Following the stream means being near the end, not exactly at it: a line that lands
+                // between polls must not stop the following for good.
+                val atEnd = scroll.scrollY + scroll.height >= output.height + scroll.paddingTop + scroll.paddingBottom - d.px(48)
                 snapshot = t
                 error = null
                 output.text = styled(t)
-                if (atEnd) scroll.post { scroll.fullScroll(ScrollView.FOCUS_DOWN) }
+                if (atEnd) toEnd()
             }
             .onFailure { if (it is kotlinx.coroutines.CancellationException) throw it; error = friendly(it) }
         render()

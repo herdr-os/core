@@ -52,6 +52,7 @@ class Design(val context: Context) {
             isClickable = true
             isFocusable = true
             setOnClickListener { action() }
+            Motion.press(this)
         }
 
     /** A harness's logo on a rounded square of its brand color. */

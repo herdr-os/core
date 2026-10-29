@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A new screen rises a little into place. 320 ms written, about 160 ms at the R1's 0.5 scale. -->
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:interpolator="@android:interpolator/decelerate_cubic" android:shareInterpolator="true">
+    <translate android:fromYDelta="6%" android:toYDelta="0" android:duration="320" />
+    <alpha android:fromAlpha="0" android:toAlpha="1" android:duration="240" />
+</set>

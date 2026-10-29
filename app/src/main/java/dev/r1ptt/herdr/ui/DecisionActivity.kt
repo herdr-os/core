@@ -8,6 +8,7 @@ import dev.r1ptt.herdr.model.Option
 import dev.r1ptt.herdr.model.Receipt
 import dev.r1ptt.herdr.model.ReceiptStatus
 import dev.r1ptt.ui.Fonts
+import dev.r1ptt.herdr.ui.HerdrScreen.Companion.who
 
 /**
  * A blocked agent's question, large, then its options. The wheel picks; a tap opens a
@@ -15,7 +16,9 @@ import dev.r1ptt.ui.Fonts
  * button never does. The answer is bound to the question's evidence fingerprint and the agent's
  * generation, so a question that changed underneath is refused rather than answered.
  */
-class DecisionActivity : HerdrScreen() {
+class DecisionActivity : PageTrampoline()
+
+class DecisionPage(host: HerdActivity, sessionId: String?) : Page(host, sessionId) {
     private sealed interface Step {
         data object Choose : Step
         data class Confirm(val option: Option) : Step
@@ -30,15 +33,13 @@ class DecisionActivity : HerdrScreen() {
     private var shownKey = ""
     override val wheelSteps = true
 
-    override fun onResume() {
-        super.onResume()
+    override fun onShow() {
         shownKey = "" // re-arms the side-button fence onPause lifted
         render()
     }
 
-    override fun onPause() {
+    override fun onHide() {
         app.turns.guardApprovalReview(null)
-        super.onPause()
     }
 
     override fun render() {
@@ -54,7 +55,7 @@ class DecisionActivity : HerdrScreen() {
         app.turns.guardApprovalReview(if (step is Step.Confirm) ({ step = Step.Choose; render() }) else null)
 
         val page = ui.page(a?.let(::who) ?: "Decision") { back() }
-        wheelScrollTarget = page.scroll
+        scrollTarget = page.scroll
         val body = page.body
         when {
             a == null || shown == null -> {
@@ -78,12 +79,10 @@ class DecisionActivity : HerdrScreen() {
         setContentView(page.root)
     }
 
-    private val d by lazy { Design(this) }
-
     /** The agent's sheep with what it says in a bubble of its harness color. */
     private fun sheepSays(body: LinearLayout, agent: dev.r1ptt.herdr.model.Agent, words: String, size: Int = 22) {
         val h = Harness.of(agent.kind)
-        body.addView(LinearLayout(this).apply {
+        body.addView(LinearLayout(context).apply {
             gravity = Gravity.BOTTOM
             addView(android.widget.ImageView(context).apply { setImageResource(h.sheep); importantForAccessibility = android.view.View.IMPORTANT_FOR_ACCESSIBILITY_NO },
                 LinearLayout.LayoutParams(d.px(104), d.px(104)).apply { marginStart = -d.px(8) })
@@ -133,6 +132,7 @@ class DecisionActivity : HerdrScreen() {
     private fun send(a: Approval, o: Option) {
         step = Step.Sending; render()
         io({ it.decide(a, o.index) }) { r ->
+            if (r.status == ReceiptStatus.ACCEPTED) Motion.confirm(frame)
             step = Step.Done(r, o)
             render()
             herdr.refresh()
@@ -152,15 +152,15 @@ class DecisionActivity : HerdrScreen() {
 
     /** The answer left but no receipt came back: show what was sent, never send it again, and settle it by key. */
     private fun unconfirmed(body: LinearLayout, agent: dev.r1ptt.herdr.model.Agent, r: Receipt, option: Option?) {
-        body.addView(android.view.View(this), LinearLayout.LayoutParams(-1, d.px(40)))
-        body.addView(LinearLayout(this).apply {
+        body.addView(android.view.View(context), LinearLayout.LayoutParams(-1, d.px(40)))
+        body.addView(LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
             background = d.fill(R.color.accent_soft, 18)
             setPadding(d.px(18), d.px(14), d.px(18), d.px(14))
             addView(d.text("YOU${option?.let { " · ${it.label.uppercase()}" } ?: ""}", 13, R.color.accent, 700, mono = true).apply { maxLines = 1; ellipsize = android.text.TextUtils.TruncateAt.END })
             approval?.question?.takeIf { it.isNotBlank() }?.let { addView(d.text(it, 16, R.color.fg, 600).apply { maxLines = 2; ellipsize = android.text.TextUtils.TruncateAt.END; setPadding(0, d.px(6), 0, 0) }) }
         }, LinearLayout.LayoutParams(d.px(250), -2).apply { gravity = Gravity.END })
-        body.addView(LinearLayout(this).apply {
+        body.addView(LinearLayout(context).apply {
             gravity = Gravity.BOTTOM
             addView(android.widget.ImageView(context).apply { setImageResource(Harness.of(agent.kind).sheep); importantForAccessibility = android.view.View.IMPORTANT_FOR_ACCESSIBILITY_NO },
                 LinearLayout.LayoutParams(d.px(84), d.px(84)).apply { marginStart = -d.px(6) })
@@ -197,9 +197,9 @@ class DecisionActivity : HerdrScreen() {
 
     /** The question was settled somewhere else (the host's own terminal, another device). Nothing was sent from here. */
     private fun alreadyAnswered(body: LinearLayout, agent: dev.r1ptt.herdr.model.Agent, asked: Approval?) {
-        body.addView(android.view.View(this), LinearLayout.LayoutParams(-1, d.px(60)))
+        body.addView(android.view.View(context), LinearLayout.LayoutParams(-1, d.px(60)))
         asked?.question?.takeIf { it.isNotBlank() }?.let { q ->
-            body.addView(LinearLayout(this).apply {
+            body.addView(LinearLayout(context).apply {
                 orientation = LinearLayout.VERTICAL
                 background = d.fill(R.color.field, 20)
                 setPadding(d.px(20), d.px(16), d.px(20), d.px(18))
@@ -207,9 +207,9 @@ class DecisionActivity : HerdrScreen() {
                 addView(d.text(q, 18, R.color.dim, 600).apply { paintFlags = paintFlags or android.graphics.Paint.STRIKE_THRU_TEXT_FLAG; setPadding(0, d.px(6), 0, 0) })
             }, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = d.px(16) })
         }
-        body.addView(LinearLayout(this).apply {
+        body.addView(LinearLayout(context).apply {
             background = android.graphics.drawable.GradientDrawable().apply {
-                setColor((getColor(R.color.ok) and 0x00FFFFFF) or 0x38000000)
+                setColor((context.getColor(R.color.ok) and 0x00FFFFFF) or 0x38000000)
                 cornerRadius = d.px(20).toFloat()
             }
             setPadding(d.px(20), d.px(18), d.px(20), d.px(20))
@@ -223,14 +223,13 @@ class DecisionActivity : HerdrScreen() {
             }, LinearLayout.LayoutParams(0, -2, 1f))
             accessibilityLiveRegion = android.view.View.ACCESSIBILITY_LIVE_REGION_POLITE
         })
-        body.addView(android.view.View(this), LinearLayout.LayoutParams(-1, 0, 1f))
+        body.addView(android.view.View(context), LinearLayout.LayoutParams(-1, 0, 1f))
         body.addView(d.pill("See what it’s doing now") { finish(); open(AgentActivity::class.java, agent.sessionId) }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = d.px(24) })
     }
 
     private fun back() { if (step is Step.Confirm) { step = Step.Choose; render() } else finish() }
 
-    @Deprecated("Deprecated in Java")
-    override fun onBackPressed() = back()
+    override fun onBack() = (step is Step.Confirm).also { if (it) { step = Step.Choose; render() } }
 
     override fun onWheel(down: Boolean): Boolean {
         val n = approval?.options?.size ?: 0

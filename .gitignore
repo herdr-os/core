@@ -33,3 +33,6 @@ bridge/dist/
 bridge/LICENSE
 # Working notes and decision trails stay local.
 .audit/
+
+# Launch videos and their work files.
+brag-output*/

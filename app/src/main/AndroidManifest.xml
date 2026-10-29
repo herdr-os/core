@@ -46,6 +46,8 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.R1"
         android:usesCleartextTraffic="true">
+        <!-- Lets perfetto record the app's trace sections on release builds; it grants nothing else. -->
+        <profileable android:shell="true" />
         <!-- Cleartext is for self-hosted Hermes/custom backends on a LAN or tailnet (http://host:port). -->
 
         <activity
@@ -73,8 +75,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".herdr.ui.AgentActivity" android:exported="false" android:screenOrientation="portrait" />
-        <activity android:name=".herdr.ui.DecisionActivity" android:exported="false" android:screenOrientation="portrait" />
+        <activity android:name=".herdr.ui.AgentActivity" android:exported="false" android:theme="@android:style/Theme.NoDisplay" />
+        <activity android:name=".herdr.ui.DecisionActivity" android:exported="false" android:theme="@android:style/Theme.NoDisplay" />
         <activity android:name=".herdr.ui.TerminalActivity" android:exported="false" android:screenOrientation="portrait" />
         <activity android:name=".herdr.ui.WorkActivity" android:exported="false" android:screenOrientation="portrait" />
         <activity android:name=".herdr.ui.ModelActivity" android:exported="false" android:screenOrientation="portrait" />
@@ -85,7 +87,7 @@
         <activity android:name=".herdr.ui.VtSpikeActivity" android:exported="false" android:screenOrientation="portrait" />
         <activity android:name=".herdr.ui.DesignPreviewActivity" android:exported="false" android:screenOrientation="portrait" />
         <activity android:name=".herdr.ui.QrScanActivity" android:exported="false" android:screenOrientation="portrait" />
-        <activity android:name=".herdr.ui.ThreadActivity" android:exported="false" android:screenOrientation="portrait" />
+        <activity android:name=".herdr.ui.ThreadActivity" android:exported="false" android:theme="@android:style/Theme.NoDisplay" />
         <activity android:name=".herdr.ui.CameraActivity" android:exported="false" android:screenOrientation="portrait" />
         <activity android:name=".herdr.ui.WalkieActivity" android:exported="false" android:screenOrientation="portrait" />
         <activity android:name=".herdr.ui.AsleepActivity" android:exported="false" android:screenOrientation="portrait" android:launchMode="singleTop" android:excludeFromRecents="true" />

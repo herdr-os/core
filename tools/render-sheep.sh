@@ -11,7 +11,9 @@ mkdir -p "$dst"
 for svg in "$src"/*.svg; do
   name=$(basename "$svg" .svg | tr '-' '_')
   case "$name" in sheep_*) ;; *) name="sheep_$name" ;; esac
-  rsvg-convert -w 384 -h 384 "$svg" -o "$dst/$name.png"
+  # 192 px: the largest sheep is about 150 px on the R1's panel, and every extra pixel is decoded
+  # and uploaded to the GPU each time a sheep appears.
+  rsvg-convert -w 192 -h 192 "$svg" -o "$dst/$name.png"
 done
 ls "$dst"
 # Harness logos for the chips on the inbox, briefing and herd cards; one color, tinted where used.

@@ -19,6 +19,7 @@ import dev.r1ptt.data.EncryptedConfigPersistence
 import dev.r1ptt.herdr.model.Insight
 import dev.r1ptt.herdr.model.Snapshot
 import dev.r1ptt.herdr.ui.AgentActivity
+import dev.r1ptt.herdr.ui.AgentPage
 import dev.r1ptt.herdr.ui.DecisionActivity
 import dev.r1ptt.herdr.ui.Design
 import dev.r1ptt.herdr.ui.HerdActivity
@@ -134,6 +135,12 @@ class HerdrSidewaysTest {
         return Robolectric.buildActivity(type, intent).setup().also { opened += it }.get().also { settle() }
     }
 
+    /** A screen that opens as a page: the pasture with it on top, started the way its trampoline starts it. */
+    private fun page(type: Class<*>, session: String?, extras: Intent.() -> Unit = {}): HerdActivity {
+        val intent = Intent(app, HerdActivity::class.java).putExtra(HerdActivity.EXTRA_PAGE, type.name).apply { session?.let { putExtra(HerdrScreen.EXTRA_SESSION, it) }; extras() }
+        return Robolectric.buildActivity(HerdActivity::class.java, intent).setup().also { opened += it }.get().also { settle(600) }
+    }
+
     private fun snap(view: View, name: String) {
         view.measure(View.MeasureSpec.makeMeasureSpec(480, View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(640, View.MeasureSpec.EXACTLY))
         view.layout(0, 0, 480, 640)
@@ -245,7 +252,7 @@ class HerdrSidewaysTest {
         pairTo("http://127.0.0.1:" + ServerSocket(0).use { it.localPort })
         val agents = listOf(agent("c1", "cerebro", "claude", "approval_required", approval = "apr1"))
         herd(Link.LIVE, three, agents, listOf(approval("apr1", "c1")))
-        val decision = open(DecisionActivity::class.java, "c1")
+        val decision = page(DecisionActivity::class.java, "c1")
         herd(Link.LIVE, three, agents, listOf(approval("apr1", "c1")))
         click(decision, "Yes, once")
         click(decision, "Send answer")
@@ -255,7 +262,7 @@ class HerdrSidewaysTest {
 
         pairTo(silentUrl)
         herd(Link.LIVE, three, agents, listOf(approval("apr1", "c1")))
-        val again = open(DecisionActivity::class.java, "c1")
+        val again = page(DecisionActivity::class.java, "c1")
         herd(Link.LIVE, three, listOf(agent("c1", "cerebro", "claude", "working")))
         assertTrue(screenText(again), screenText(again).contains("Already answered") && screenText(again).contains("Nothing was sent from here."))
         snap(again, "247-already-answered")
@@ -264,19 +271,24 @@ class HerdrSidewaysTest {
     @Test fun `an agent that crashed, ran out of usage or filled its context leads with it`() {
         pairTo(silentUrl)
         herd(Link.LIVE, three, listOf(agent("c1", "cerebro", "claude", "idle"), agent("x1", "cerebro", "codex", "failed", summary = "running npm test")))
-        fun insight(a: Activity, i: Insight) {
-            AgentActivity::class.java.getDeclaredField("insight").apply { isAccessible = true }.set(a, i)
-            AgentActivity::class.java.getDeclaredField("shownKey").apply { isAccessible = true }.set(a, "")
+        // The Agent screen is a page on the pasture; its own text is what it shows.
+        fun agentPage(id: String) = open(HerdActivity::class.java).also { it.open(AgentActivity::class.java, id); settle(600) }
+        fun pageText(h: HerdActivity) = texts(h.topPage()!!.frame).joinToString("\n")
+        fun insight(h: HerdActivity, i: Insight) {
+            val page = h.topPage()!!
+            AgentPage::class.java.getDeclaredField("insight").apply { isAccessible = true }.set(page, i)
+            AgentPage::class.java.getDeclaredField("shownKey").apply { isAccessible = true }.set(page, "")
             bump()
         }
-        val crashed = open(AgentActivity::class.java, "x1")
-        assertTrue(screenText(crashed).contains("STOPPED UNEXPECTEDLY") && screenText(crashed).contains("last: running npm test"))
+        val crashed = agentPage("x1")
+        assertTrue(pageText(crashed).contains("STOPPED UNEXPECTEDLY") && pageText(crashed).contains("last: running npm test"))
         snap(crashed, "245-crashed")
 
-        val limited = open(AgentActivity::class.java, "c1")
+        crashed.closePage(crashed.topPage()!!); settle(600)
+        val limited = agentPage("c1")
         insight(limited, Insight("claude-opus-5-5", null, 90_000, null, emptyList(), emptyList(), "You've hit your limit · resets 2:20pm (Europe/Madrid)"))
-        assertTrue(screenText(limited), screenText(limited).contains("Resets 2:20pm.") && screenText(limited).contains("Finish on Sonnet"))
-        assertFalse("no honest hand-off to Codex, so none is offered", screenText(limited).contains("Codex"))
+        assertTrue(pageText(limited), pageText(limited).contains("Resets 2:20pm.") && pageText(limited).contains("Finish on Sonnet"))
+        assertFalse("no honest hand-off to Codex, so none is offered", pageText(limited).contains("Codex"))
         snap(limited, "248-rate-limited")
         click(limited, "Finish on Sonnet")
         val dialog = org.robolectric.shadows.ShadowAlertDialog.getLatestAlertDialog()
@@ -284,9 +296,9 @@ class HerdrSidewaysTest {
         dialog.dismiss()
 
         insight(limited, Insight("claude-opus-5-5", null, 619_000, null, emptyList(), emptyList(), null))
-        assertFalse("no recorded window, no guessed alarm: 619k is healthy on a 1M model", screenText(limited).contains("Compact and keep going"))
+        assertFalse("no recorded window, no guessed alarm: 619k is healthy on a 1M model", pageText(limited).contains("Compact and keep going"))
         insight(limited, Insight("claude-opus-5-5", null, 192_000, 200_000, emptyList(), emptyList(), null))
-        assertTrue(screenText(limited), screenText(limited).contains("96%") && screenText(limited).contains("Compact and keep going"))
+        assertTrue(pageText(limited), pageText(limited).contains("96%") && pageText(limited).contains("Compact and keep going"))
         snap(limited, "294-context-full")
     }
 

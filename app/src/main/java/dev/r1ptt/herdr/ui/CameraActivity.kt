@@ -187,8 +187,8 @@ class CameraActivity : HerdrScreen() {
             busy = false
             if (r.status != ReceiptStatus.ACCEPTED) { status.text = ""; return@io showToast(receiptText(r)) }
             r.result?.optString("path")?.takeIf(String::isNotBlank)?.let { runCatching { localCopy(this, it).apply { parentFile?.mkdirs() }.writeBytes(jpeg) } }
-            open(ThreadActivity::class.java, a.sessionId)
             finish()
+            open(ThreadActivity::class.java, a.sessionId)
         }
     }
 

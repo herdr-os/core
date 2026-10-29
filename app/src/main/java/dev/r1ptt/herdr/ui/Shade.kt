@@ -63,7 +63,7 @@ class Shade(private val screen: HerdrScreen) {
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> if (dragging) {
                 dragging = false; startY = -1f
                 // About half the panel's height: past it the shade opens, short of it it goes back.
-                if (pulled > d.px(160) && e.actionMasked == MotionEvent.ACTION_UP) settleOpen() else close()
+                if (pulled > d.px(160) && e.actionMasked == MotionEvent.ACTION_UP) { settleOpen(); Motion.tick(screen.window.decorView) } else close()
                 return true
             }
         }
@@ -268,6 +268,7 @@ class Shade(private val screen: HerdrScreen) {
         addView(d.text(label, 14, R.color.fg, 600).apply { gravity = Gravity.CENTER; setPadding(0, d.px(8), 0, 0) }, LinearLayout.LayoutParams(-1, -2))
         contentDescription = label + (badge?.let { ", $it waiting" } ?: "")
         setOnClickListener { tap() }
+        Motion.press(this)
     }
 
     private fun toggle(icon: Int, title: String, state: String, on: Boolean, tap: () -> Unit) = LinearLayout(screen).apply {
@@ -284,6 +285,7 @@ class Shade(private val screen: HerdrScreen) {
         }, LinearLayout.LayoutParams(0, -2, 1f).apply { marginStart = d.px(12) })
         contentDescription = "$title, $state"
         setOnClickListener { tap() }
+        Motion.press(this)
     }
 
     private fun pair(a: View, b: View) = LinearLayout(screen).apply {

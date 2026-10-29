@@ -61,6 +61,7 @@ class MenuActivity : HerdrScreen() {
                 contentDescription = "${item.title}. ${item.sub}"
                 isClickable = true
                 setOnClickListener { at = i; item.go() }
+                Motion.press(this, depth = 0.98f)
             }
             rows += row
             p.body.addView(row, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = d.px(4) })
@@ -69,6 +70,7 @@ class MenuActivity : HerdrScreen() {
             setSpan(ForegroundColorSpan(getColor(R.color.accent)), 0, 5, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         }, 13, R.color.dim, 600, mono = true).apply { setPadding(d.px(26), d.px(8), d.px(26), d.px(20)) })
         setContentView(p.root)
+        Motion.arrive(p.body)
         highlight()
     }
 

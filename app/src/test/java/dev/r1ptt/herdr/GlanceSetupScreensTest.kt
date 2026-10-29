@@ -186,7 +186,11 @@ class GlanceSetupScreensTest {
         assertTrue("silent without a voice: no SPEAKING header", textView(briefing, "SPEAKING").let { !it.isShown })
         snap(briefing, "31-briefing")
         click(briefing, "Show me Claude")
-        assertEquals("Show me opens the waiting agent's question", dev.r1ptt.herdr.ui.DecisionActivity::class.java.name, shadowOf(briefing).nextStartedActivity.component?.className)
+        val showMe = shadowOf(briefing).nextStartedActivity
+        assertEquals("Show me opens the waiting agent's question", dev.r1ptt.herdr.ui.DecisionActivity::class.java.name, showMe.getStringExtra(dev.r1ptt.herdr.ui.HerdActivity.EXTRA_PAGE))
+        val pasture = Robolectric.buildActivity(dev.r1ptt.herdr.ui.HerdActivity::class.java, showMe).setup().also { opened += it }.get().also { settle(600) }
+        pasture.closePage(pasture.topPage()!!); settle(600)
+        assertEquals("the briefing closed itself, so Back stays on the pasture", null, shadowOf(pasture).nextStartedActivity)
 
         val inbox = open(HerdActivityFeed::class.java)
         until("inbox events") { screenText(inbox).contains("EARLIER") && !screenText(inbox).contains("Loading…") }
@@ -199,6 +203,11 @@ class GlanceSetupScreensTest {
         deck.dispatchKeyEvent(KeyEvent(0, 0, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_VOLUME_DOWN, 0, 0, -1, 108))
         settle()
         assertTrue("the wheel deals the next card", screenText(deck).contains("2 / 3"))
+        // The deck stays open under an agent's page, so Back from the page returns to it.
+        deck.open(dev.r1ptt.herdr.ui.AgentActivity::class.java, app.herdr.state.deck.first().sessionId)
+        val onTop = Robolectric.buildActivity(dev.r1ptt.herdr.ui.HerdActivity::class.java, shadowOf(deck).nextStartedActivity).setup().also { opened += it }.get().also { settle(600) }
+        onTop.closePage(onTop.topPage()!!); settle(600)
+        assertEquals("Back from the agent returns to the deck", HerdListActivity::class.java.name, shadowOf(onTop).nextStartedActivity?.component?.className)
 
         // Herdr OS's shade: a drag down from the top of the pasture pulls it over the screen.
         fun drag(a: android.app.Activity, from: Float, to: Float) {

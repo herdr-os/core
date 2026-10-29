@@ -17,7 +17,7 @@ Rendered by the app's Robolectric tests against the bridge's demo herd, not capt
 
 ## Install
 
-- **The R1:** <https://ds-mac-mini.tail938700.ts.net/install> walks a stock R1 to Herdr OS from
+- **The R1:** <https://herdr-os-website.vercel.app/install> walks a stock R1 to Herdr OS from
   Chrome over USB (unlock, LineageOS, Magisk root, Herdr OS), confirming before anything that
   erases. The same steps by hand are in [docs/INSTALL.md](docs/INSTALL.md).
 - **The bridge,** on the computer where Herdr runs:

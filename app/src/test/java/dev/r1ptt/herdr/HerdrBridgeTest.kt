@@ -26,6 +26,7 @@ import dev.r1ptt.herdr.ui.HerdrScreen
 import dev.r1ptt.herdr.ui.HerdrSettingsActivity
 import dev.r1ptt.herdr.ui.TerminalActivity
 import dev.r1ptt.herdr.ui.ThreadActivity
+import dev.r1ptt.herdr.ui.ThreadPage
 import dev.r1ptt.herdr.ui.WalkieActivity
 import org.json.JSONObject
 import org.junit.After
@@ -127,6 +128,12 @@ class HerdrBridgeTest {
         return Robolectric.buildActivity(type, intent).setup().also { opened += it }.get().also { settle() }
     }
 
+    /** A screen that opens as a page: the pasture with it on top, started the way its trampoline starts it. */
+    private fun page(type: Class<*>, session: String?, extras: Intent.() -> Unit = {}): HerdActivity {
+        val intent = Intent(app, HerdActivity::class.java).putExtra(HerdActivity.EXTRA_PAGE, type.name).apply { session?.let { putExtra(HerdrScreen.EXTRA_SESSION, it) }; extras() }
+        return Robolectric.buildActivity(HerdActivity::class.java, intent).setup().also { opened += it }.get().also { settle(600) }
+    }
+
     private fun snap(activity: Activity, name: String) {
         val content = activity.findViewById<ViewGroup>(android.R.id.content)
         content.measure(View.MeasureSpec.makeMeasureSpec(480, View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(640, View.MeasureSpec.EXACTLY))
@@ -173,19 +180,26 @@ class HerdrBridgeTest {
         assertTrue("the asking sheep is in front with its question", screenText(deck).contains("Claude Code is asking for you.") && screenText(deck).contains("Which migration strategy should I use?"))
         snap(deck, "01-herd")
         wheel(deck, down = true)
-        assertTrue("wheel brought the next sheep forward and sent Claude to graze", screenText(deck).contains("CLAUDE · NEEDS DECISION"))
+        assertTrue("wheel brought the next sheep forward and sent Claude to graze", screenText(deck).contains("BACKEND API · NEEDS DECISION"))
+        @Suppress("UNCHECKED_CAST")
+        val herd = HerdActivity::class.java.getDeclaredField("sheepViews").apply { isAccessible = true }.get(deck) as Map<String, View>
+        settle(1000)
+        assertTrue("after a wheel step the herd comes to rest in its new places", herd.values.all { it.translationX == 0f && it.translationY == 0f && it.scaleX == 1f })
         snap(deck, "02-herd-wheel")
         wheel(deck, down = false)
 
         val claude = cards.first()
-        val agent = open(AgentActivity::class.java, claude.sessionId)
-        until("agent activity") { !screenText(agent).contains("Loading…") }
-        snap(agent, "03-agent")
-        opened.last().pause()
-        assertTrue("leaving a Herdr screen hands push-to-talk back to the deck, not Hermes", app.turns.target === deck && deck.isActive())
-        opened.last().resume()
+        // The Agent screen opens as a page on the pasture: no activity of its own.
+        deck.open(AgentActivity::class.java, claude.sessionId)
+        val agentPage = deck.topPage()!!
+        until("agent page") { texts(agentPage.frame).any { it.equals("Activity", true) } && texts(agentPage.frame).none { it == "Loading…" } }
+        assertTrue("it is the agent's page", texts(agentPage.frame).any { it == "Claude Code" })
+        snap(deck, "03-agent")
+        assertTrue("push-to-talk stays with the pasture while a page is open", app.turns.target === deck && deck.isActive())
+        deck.closePage(agentPage); settle(600)
+        assertTrue("Back leaves the page and the pasture is home again", deck.topPage() == null)
 
-        val decision = open(DecisionActivity::class.java, claude.sessionId)
+        val decision = page(DecisionActivity::class.java, claude.sessionId)
         assertTrue(screenText(decision).contains("Which migration strategy should I use?"))
         snap(decision, "04-decision")
         wheel(decision, down = true)
@@ -202,6 +216,15 @@ class HerdrBridgeTest {
         until("terminal output") { screenText(term).contains("AssertionError") }
         assertFalse("TUI chrome is stripped", screenText(term).contains("╭"))
         snap(term, "07-terminal")
+        // Streaming: more lines than fit, and the view follows to the newest one once it is laid out.
+        val termOutput = TerminalActivity::class.java.getDeclaredField("output").apply { isAccessible = true }.get(term) as TextView
+        val termScroll = TerminalActivity::class.java.getDeclaredField("scroll").apply { isAccessible = true }.get(term) as android.widget.ScrollView
+        termOutput.text = (1..300).joinToString("\n") { "line $it" }
+        TerminalActivity::class.java.getDeclaredMethod("toEnd").apply { isAccessible = true }.invoke(term)
+        settle()
+        termScroll.viewTreeObserver.dispatchOnPreDraw()
+        assertTrue("terminal follows to the newest line (${termScroll.scrollY} + ${termScroll.height} of ${termOutput.height})",
+            termScroll.scrollY > 0 && termScroll.scrollY + termScroll.height >= termOutput.height)
         click(term, "Type")
         assertTrue(screenText(term).contains("TYPING INTO PANE"))
         snap(term, "07b-terminal-typing")
@@ -298,18 +321,19 @@ class HerdrBridgeTest {
         open(HerdActivity::class.java)
         until("live herd") { app.herdr.state.link == Link.LIVE && app.herdr.state.deck.size == 3 }
         val codex = app.herdr.state.deck.first { it.kind == "codex" }
-        val thread = open(ThreadActivity::class.java, codex.sessionId)
+        val thread = page(ThreadActivity::class.java, codex.sessionId)
         until("the conversation from Codex's session file") { screenText(thread).contains("Writing tests/auth.test.ts") }
         assertTrue(screenText(thread).contains("Write regression tests for the auth module."))
         snap(thread, "20-thread")
         // A poll that only moves the context count must not rebuild the thread: no jump, no flash.
-        val threadFrame = thread.findViewById<android.view.ViewGroup>(android.R.id.content).getChildAt(0)
-        val insightField = ThreadActivity::class.java.getDeclaredField("insight").apply { isAccessible = true }
-        val polled = insightField.get(thread) as dev.r1ptt.herdr.model.Insight
-        insightField.set(thread, polled.copy(contextUsed = (polled.contextUsed ?: 0) + 1200))
-        ThreadActivity::class.java.getDeclaredMethod("render").apply { isAccessible = true }.invoke(thread)
-        assertTrue("same frame after a context-only poll", thread.findViewById<android.view.ViewGroup>(android.R.id.content).getChildAt(0) === threadFrame)
-        insightField.set(thread, polled)
+        val threadPage = thread.topPage()!!
+        val threadFrame = threadPage.frame.getChildAt(0)
+        val insightField = ThreadPage::class.java.getDeclaredField("insight").apply { isAccessible = true }
+        val polled = insightField.get(threadPage) as dev.r1ptt.herdr.model.Insight
+        insightField.set(threadPage, polled.copy(contextUsed = (polled.contextUsed ?: 0) + 1200))
+        threadPage.render()
+        assertTrue("same frame after a context-only poll", threadPage.frame.getChildAt(0) === threadFrame)
+        insightField.set(threadPage, polled)
 
         thread.showPartial("Run them against the CI image too")
         assertTrue("a hold in the thread says where it goes", screenText(thread).contains("RELEASE TO SEND"))
@@ -324,7 +348,7 @@ class HerdrBridgeTest {
         val path = sent.result!!.getString("path")
         assertTrue("saved beside the agent's project: $path", path.contains("/tests-qa/.herdr-attachments/") && File(path).readBytes().contentEquals(jpeg))
         dev.r1ptt.herdr.ui.CameraActivity.localCopy(app, path).apply { parentFile!!.mkdirs() }.writeBytes(jpeg)
-        val photo = open(ThreadActivity::class.java, codex.sessionId)
+        val photo = page(ThreadActivity::class.java, codex.sessionId)
         until("the photo in the thread") { screenText(photo).contains("This shows right after the install.") }
         assertTrue(screenText(photo).contains("PHOTO"))
         snap(photo, "23-photo-sent")
@@ -335,9 +359,7 @@ class HerdrBridgeTest {
         snap(camera, "24-camera")
 
         val claude = app.herdr.state.deck.first { it.kind == "claude" }
-        val about = Robolectric.buildActivity(ThreadActivity::class.java, Intent(app, ThreadActivity::class.java)
-            .putExtra(HerdrScreen.EXTRA_SESSION, claude.sessionId).putExtra(ThreadActivity.EXTRA_ABOUT, "test-runner")).setup().also { opened += it }.get()
-        settle()
+        val about = page(ThreadActivity::class.java, claude.sessionId) { putExtra(ThreadActivity.EXTRA_ABOUT, "test-runner") }
         about.showPartial("Skip the bench test")
         assertTrue(screenText(about).contains("TO SUBAGENT") && screenText(about).contains("via Claude Code, its lead"))
         snap(about, "25-subagent-listening")
