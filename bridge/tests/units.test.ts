@@ -79,3 +79,14 @@ test("agents carry their Herdr workspace label, or nothing when Herdr can't list
   const [plain] = await new TransportAdapter("m", "M", "local", transport(false) as never).listAgents();
   assert.equal(plain.workspace, null);
 });
+
+test("a spoken harness name picks that harness, and oh my pi is not pi", async () => {
+  const { resolveIntent } = await import("../src/intents/resolve.ts");
+  const session = (id: string, agent: string) => ({ session_id: id, machine_id: "m", machine_label: "mac", agent, name: null, title: "", project: "app", cwd: null, state: "idle", herdr_status: "idle", priority: 0, generation: 1, state_since: "", stale: false, pending_approval_id: null, summary: "" });
+  const herd = [session("1", "pi"), session("2", "omp"), session("3", "gemini"), session("4", "opencode")] as never[];
+  const to = (said: string) => resolveIntent(said, herd, []).intent?.session_id;
+  assert.equal(to("ask gemini to fix the tests"), "3");
+  assert.equal(to("ask oh my pi to fix the tests"), "2");
+  assert.equal(to("ask pi to fix the tests"), "1");
+  assert.equal(to("ask open code to fix the tests"), "4");
+});

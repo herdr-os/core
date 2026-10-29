@@ -15,10 +15,32 @@ export interface Resolution {
   parsed: { agent: string | null; machine: string | null; project: string | null; instruction: string };
 }
 
+// Keyed by Herdr's agent kind. First match wins, so a name that contains another (oh my pi) comes first.
 const AGENT_ALIASES: Record<string, string[]> = {
   claude: ["claude", "claude code", "cloud", "clod"],
   codex: ["codex", "code x", "codecs"],
+  omp: ["oh my pi", "omp"],
   pi: ["pi", "pie", "π"],
+  opencode: ["opencode", "open code"],
+  copilot: ["copilot", "co pilot", "github copilot"],
+  cursor: ["cursor"],
+  gemini: ["gemini", "gemini cli"],
+  agy: ["antigravity", "anti gravity"],
+  devin: ["devin"],
+  droid: ["droid", "factory"],
+  amp: ["amp"],
+  grok: ["grok", "grock"],
+  kimi: ["kimi", "kimmy"],
+  qwen: ["qwen", "quen", "kwen"],
+  qodercli: ["qoder"],
+  kiro: ["kiro", "kero"],
+  kilo: ["kilo", "kilo code"],
+  cline: ["cline"],
+  hermes: ["hermes"],
+  letta: ["letta"],
+  mastracode: ["mastra", "mastra code"],
+  maki: ["maki", "mackie"],
+  muse: ["muse", "muse code"],
 };
 
 const QUESTION_START = /^(what|why|how|when|where|who|which|is|are|does|do|did|can you explain|explain|tell me|show me)\b/i;
