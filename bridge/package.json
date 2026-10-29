@@ -1,6 +1,6 @@
 {
   "name": "@herdr-os/bridge",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "The bridge between a Rabbit R1 running Herdr OS and the coding agents Herdr runs on your machines.",
   "license": "MIT",
   "type": "module",
