@@ -105,6 +105,8 @@ function cliArgs(method: string, p: Record<string, unknown>): string[] | null {
     case "ping":
     case "agent.list":
       return ["agent", "list"];
+    case "workspace.list":
+      return ["workspace", "list"];
     case "agent.read":
       return ["agent", "read", String(p.target), "--source", String(p.source).replace("_", "-"), "--lines", String(p.lines ?? 200)];
     case "agent.prompt":

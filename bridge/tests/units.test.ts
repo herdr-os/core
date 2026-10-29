@@ -63,3 +63,19 @@ test("pairing link carries the bridge origin and the one-time code", async () =>
     "herdr://pair?u=http%3A%2F%2F100.80.68.69%3A8787&c=1-2&s=read%2Cact&x=2026-10-29T10%3A00%3A00.000Z");
   assert.throws(() => pairingLink("ftp://x", "1"));
 });
+
+test("agents carry their Herdr workspace label, or nothing when Herdr can't list workspaces", async () => {
+  const { TransportAdapter } = await import("../src/herdr-adapter/adapter.ts");
+  const agent = { pane_id: "w1:p1", workspace_id: "w1", agent: "claude", agent_status: "idle", revision: 1 };
+  const transport = (workspaces: boolean) => ({
+    request: async (method: string) => {
+      if (method === "agent.list") return { agents: [agent] };
+      if (method === "workspace.list" && workspaces) return { workspaces: [{ workspace_id: "w1", label: "payments" }] };
+      throw new Error("unsupported");
+    },
+  });
+  const [named] = await new TransportAdapter("m", "M", "local", transport(true) as never).listAgents();
+  assert.equal(named.workspace, "payments");
+  const [plain] = await new TransportAdapter("m", "M", "local", transport(false) as never).listAgents();
+  assert.equal(plain.workspace, null);
+});

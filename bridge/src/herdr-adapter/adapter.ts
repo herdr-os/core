@@ -5,6 +5,8 @@ import { HerdrError, MachineCliTransport, SocketTransport, type HerdrTransport }
 export interface HerdrAgent {
   pane_id: string;
   workspace_id: string;
+  /** The workspace's label in Herdr (renamable; the folder name by default), added by [listAgents]. */
+  workspace?: string | null;
   agent: string | null;
   name?: string | null;
   agent_status: HerdrStatus;
@@ -59,7 +61,10 @@ export class TransportAdapter implements HerdrAdapter {
 
   async listAgents() {
     const r = await this.transport.request<{ agents: HerdrAgent[] }>("agent.list", {});
-    return r.agents.filter((a) => a.agent);
+    // A Herdr that can't list workspaces just leaves agents named by their folder.
+    const labels = await this.transport.request<{ workspaces: { workspace_id: string; label?: string }[] }>("workspace.list", {})
+      .then((w) => new Map(w.workspaces.map((x) => [x.workspace_id, x.label])), () => new Map<string, string | undefined>());
+    return r.agents.filter((a) => a.agent).map((a) => ({ ...a, workspace: labels.get(a.workspace_id) || null }));
   }
 
   async read(paneId: string, lines: number, opts: { source?: "recent_unwrapped" | "detection" | "visible"; ansi?: boolean } = {}) {

@@ -133,7 +133,7 @@ export class Herd {
           agent: a.agent ?? "agent",
           name: a.name ?? null,
           title,
-          project: cwd ? path.basename(cwd) : "",
+          project: a.workspace || (cwd ? path.basename(cwd) : ""),
           cwd,
           state: "idle",
           herdr_status: a.agent_status,
@@ -165,7 +165,7 @@ export class Herd {
     s.title = title || s.title;
     s.summary = s.summary || s.title;
     s.cwd = cwd ?? s.cwd;
-    s.project = s.cwd ? path.basename(s.cwd) : s.project;
+    s.project = a.workspace || (s.cwd ? path.basename(s.cwd) : s.project);
     s.name = a.name ?? s.name;
     s.agent = a.agent ?? s.agent;
 
