@@ -17,7 +17,9 @@ for svg in "$src"/*.svg; do
 done
 ls "$dst"
 # Harness logos for the chips on the inbox, briefing and herd cards; one color, tinted where used.
-for logo in claude codex pi-mono opencode; do
-  name=$(echo "logo_${logo%-mono}")
-  rsvg-convert -w 96 -h 96 "$ROOT/design-reference/harness-logos/$logo.svg" -o "$dst/$name.png"
+# pi.svg is Pi's mark in its own colors; pi-mono.svg is the one-color version used here.
+for svg in "$ROOT"/design-reference/harness-logos/*.svg; do
+  logo=$(basename "$svg" .svg)
+  [ "$logo" = pi ] && continue
+  rsvg-convert -w 96 -h 96 "$svg" -o "$dst/logo_${logo%-mono}.png"
 done

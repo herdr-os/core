@@ -67,6 +67,13 @@ branded sheep per harness, awake and asleep. `tools/render-sheep.sh` renders the
 `res/drawable-nodpi/`; the logo sits on a skewed face that Android vector drawables can't express,
 so they ship as PNGs. Logos and their sources are in `design-reference/harness-logos/`.
 
+Every harness Herdr runs is one row in `design-reference/harnesses.json`: its Herdr kinds, wool
+color, ink and logo. `tools/make-herd.py` builds the rest from it: the branded sheep (Claude Code,
+Codex, Pi and OpenCode were drawn by hand and are kept), `Harness.kt`, the app's colors and the
+website's carousel. A harness with no published mark carries a lettermark. Add a harness by adding a
+row, then run `tools/make-herd.py` and `tools/render-sheep.sh`. An agent kind not in the table
+grazes as a plain sheep.
+
 ## The OS around the app
 
 Stock Android should not show through. The Magisk module (`magisk/r1ptt-system`) turns off Android's
