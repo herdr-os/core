@@ -1,0 +1,99 @@
+(
+    <div style={{ backgroundColor: '#070B12', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', fontSize: '12px', fontSynthesis: 'none', height: '640px', lineHeight: '16px', MozOsxFontSmoothing: 'grayscale', overflow: 'clip', overflowWrap: 'anywhere', position: 'relative', WebkitFontSmoothing: 'antialiased', width: '480px' }}>
+      <div style={{ boxSizing: 'border-box', height: '640px', left: '0px', overflow: 'clip', position: 'absolute', top: '0px', width: '480px' }}>
+        <div style={{ backgroundImage: 'linear-gradient(in oklab 180deg, #14243A 0%, #0C1726 55%, #070B1200 100%)', boxSizing: 'border-box', height: '380px', left: '0px', position: 'absolute', top: '0px', width: '480px' }} />
+        <div style={{ backgroundColor: '#9DB8CC', borderRadius: '50%', boxSizing: 'border-box', height: '60px', left: '-40px', opacity: '0.08', position: 'absolute', top: '250px', width: '560px' }} />
+        <div style={{ backgroundColor: '#9DB8CC', borderRadius: '50%', boxSizing: 'border-box', height: '40px', left: '20px', opacity: '0.06', position: 'absolute', top: '290px', width: '440px' }} />
+      </div>
+      <svg width="480" height="420" viewBox="0 0 480 420" xmlns="http://www.w3.org/2000/svg" style={{ position: 'absolute', left: '0px', top: '150px', display: 'inline-block' }}>
+        <path d="M240 20 L470 135 L240 250 L10 135 Z" fill="#0D1820" />
+        <g>
+          <path d="M182.5 48.75 L412.5 163.75" fill="none" stroke="#172017" />
+          <path d="M125 77.5 L355 192.5" fill="none" stroke="#172017" />
+          <path d="M67.5 106.25 L297.5 221.25" fill="none" stroke="#172017" />
+          <path d="M297.5 48.75 L67.5 163.75" fill="none" stroke="#172017" />
+          <path d="M355 77.5 L125 192.5" fill="none" stroke="#172017" />
+          <path d="M412.5 106.25 L182.5 221.25" fill="none" stroke="#172017" />
+        </g>
+        <path d="M240 20 L470 135 L240 250 L10 135 Z" fill="none" stroke="#1E2A1E" strokeWidth="1.5" />
+      </svg>
+      <div style={{ boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '8px', left: '26px', position: 'absolute', right: '26px', top: '26px' }}>
+        <div style={{ alignItems: 'center', boxSizing: 'border-box', display: 'flex', gap: '8px' }}>
+          <div style={{ backgroundColor: '#4ADE80', borderRadius: '50%', boxSizing: 'border-box', flexShrink: '0', height: '8px', width: '8px' }} />
+          <div style={{ boxSizing: 'border-box', color: '#4ADE80', fontFamily: '"JetBrains Mono", system-ui, sans-serif', fontSize: '14px', fontWeight: 600, letterSpacing: '0.1em', lineHeight: '18px' }}>
+            3 HOSTS · 5 SHEEP
+          </div>
+        </div>
+        <div style={{ boxSizing: 'border-box', color: '#F4EFE6', fontFamily: '"Space Grotesk", system-ui, sans-serif', fontSize: '28px', fontWeight: 700, letterSpacing: '-0.02em', lineHeight: '33px' }}>
+          Morning. <span style={{ color: '#8C9BAA' }}>Claude Code is asking for you.</span>
+        </div>
+      </div>
+      <div style={{ boxSizing: 'border-box', height: '640px', left: '0px', position: 'absolute', top: '0px', width: '480px' }}>
+        <div style={{ backgroundImage: 'url(https://app.paper.design/file-assets/01M625BYBEZ8W0D3H83MGGXJ3T/631BRW1QZPKN69Q0P970BMWDA4.svg)', backgroundPosition: '50%', backgroundRepeat: 'no-repeat', backgroundSize: '100% 100%', boxSizing: 'border-box', height: '52px', left: 214, opacity: '0.7', position: 'absolute', top: 176, width: '52px' }} />
+        <div style={{ backgroundImage: 'url(https://app.paper.design/file-assets/01M625BYBEZ8W0D3H83MGGXJ3T/5JPP61Z3Q1D25PMBD4TZ3BJ833.svg)', backgroundPosition: '50%', backgroundRepeat: 'no-repeat', backgroundSize: '100% 100%', boxSizing: 'border-box', height: '50px', left: 386, opacity: '0.8', position: 'absolute', top: 236, width: '50px' }} />
+      </div>
+      <div style={{ boxSizing: 'border-box', height: '640px', left: '0px', position: 'absolute', top: '0px', width: '480px' }}>
+        <div style={{ alignItems: 'center', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '4px', left: '48px', position: 'absolute', top: '236px' }}>
+          <div style={{ backgroundImage: 'url(https://app.paper.design/file-assets/01M625BYBEZ8W0D3H83MGGXJ3T/5JPP61Z3Q1D25PMBD4TZ3BJ833.svg)', backgroundPosition: '50%', backgroundRepeat: 'no-repeat', backgroundSize: '100% 100%', boxSizing: 'border-box', flexShrink: '0', height: '80px', width: '80px' }} />
+          <div style={{ backgroundColor: '#141414', borderRadius: '999px', boxSizing: 'border-box', paddingBlock: '4px', paddingInline: '8px' }}>
+            <div style={{ boxSizing: 'border-box', color: '#B8B3AA', fontFamily: '"JetBrains Mono", system-ui, sans-serif', fontSize: '13px', fontWeight: 600, letterSpacing: '0.06em', lineHeight: '16px' }}>
+              CODEX · 62%
+            </div>
+          </div>
+        </div>
+        <div style={{ alignItems: 'center', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '4px', left: '350px', position: 'absolute', top: '290px' }}>
+          <div style={{ backgroundImage: 'url(https://app.paper.design/file-assets/01M625BYBEZ8W0D3H83MGGXJ3T/66DCCDT8KQ2J4NXGTG6MDAZ341.svg)', backgroundPosition: '50%', backgroundRepeat: 'no-repeat', backgroundSize: '100% 100%', boxSizing: 'border-box', flexShrink: '0', height: '76px', width: '76px' }} />
+          <div style={{ backgroundColor: '#141414', borderRadius: '999px', boxSizing: 'border-box', paddingBlock: '4px', paddingInline: '8px' }}>
+            <div style={{ boxSizing: 'border-box', color: '#8C8880', fontFamily: '"JetBrains Mono", system-ui, sans-serif', fontSize: '13px', fontWeight: 600, letterSpacing: '0.06em', lineHeight: '16px' }}>
+              PI · IDLE
+            </div>
+          </div>
+          <div style={{ boxSizing: 'border-box', color: '#4D9ABF', fontFamily: '"Space Grotesk", system-ui, sans-serif', fontSize: '15px', fontWeight: 700, left: '72px', lineHeight: '18px', position: 'absolute', top: '8px', width: 'max-content' }}>
+            z <span style={{ fontSize: '11px', lineHeight: '14px' }}>z</span>
+          </div>
+        </div>
+      </div>
+      <div style={{ alignItems: 'center', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', left: '105px', position: 'absolute', top: '226px', width: '270px' }}>
+        <div style={{ alignItems: 'center', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', marginBottom: '2px' }}>
+          <div style={{ backgroundColor: '#D97757', borderRadius: '20px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '4px', paddingBlock: '12px', paddingInline: '16px', width: '250px' }}>
+            <div style={{ alignItems: 'center', boxSizing: 'border-box', display: 'flex', gap: '6px' }}>
+              <div style={{ alignItems: 'center', backgroundColor: '#FF4F12', borderRadius: '50%', boxSizing: 'border-box', display: 'flex', flexShrink: '0', height: '16px', justifyContent: 'center', width: '16px' }}>
+                <div style={{ boxSizing: 'border-box', color: '#0B0B0B', fontFamily: '"Space Grotesk", system-ui, sans-serif', fontSize: '11px', fontWeight: 700, lineHeight: '14px' }}>
+                  !
+                </div>
+              </div>
+              <div style={{ boxSizing: 'border-box', color: '#141413', fontFamily: '"JetBrains Mono", system-ui, sans-serif', fontSize: '13px', fontWeight: 700, letterSpacing: '0.1em', lineHeight: '16px' }}>
+                NEEDS YOU
+              </div>
+            </div>
+            <div style={{ boxSizing: 'border-box', color: '#141413', fontFamily: '"Space Grotesk", system-ui, sans-serif', fontSize: '17px', fontWeight: 700, lineHeight: '21px' }}>
+              Can I install the new build on the R1?
+            </div>
+          </div>
+          <svg width="22" height="12" viewBox="0 0 22 12" xmlns="http://www.w3.org/2000/svg" style={{ display: 'inline-block', flexShrink: '0' }}>
+            <path d="M0 0 H22 L11 12 Z" fill="#D97757" />
+          </svg>
+        </div>
+        <div style={{ boxSizing: 'border-box', flexShrink: '0', height: '150px', position: 'relative', width: '150px' }}>
+          <div style={{ borderColor: '#FF4F12', borderRadius: '50%', borderStyle: 'solid', borderWidth: '3px', boxSizing: 'border-box', height: '40px', left: '5px', position: 'absolute', top: '112px', width: '140px' }} />
+          <div style={{ backgroundImage: 'url(https://app.paper.design/file-assets/01M625BYBEZ8W0D3H83MGGXJ3T/39HH5MCD9RTZ982923VS6V0BVA.svg)', backgroundPosition: '50%', backgroundRepeat: 'no-repeat', backgroundSize: '100% 100%', boxSizing: 'border-box', height: '150px', left: 0, position: 'absolute', top: 0, width: '150px' }} />
+        </div>
+        <div style={{ boxSizing: 'border-box', paddingTop: '8px' }}>
+          <div style={{ boxSizing: 'border-box', color: '#F4EFE6', fontFamily: '"Space Grotesk", system-ui, sans-serif', fontSize: '20px', fontWeight: 700, lineHeight: '24px' }}>
+            Claude Code
+          </div>
+        </div>
+        <div style={{ boxSizing: 'border-box', color: '#8C8880', fontFamily: '"JetBrains Mono", system-ui, sans-serif', fontSize: '13px', letterSpacing: '0.06em', lineHeight: '16px' }}>
+          OPUS 5.5 · CEREBRO
+        </div>
+      </div>
+      <div style={{ bottom: '22px', boxSizing: 'border-box', display: 'flex', justifyContent: 'space-between', left: '26px', position: 'absolute', right: '26px' }}>
+        <div style={{ boxSizing: 'border-box', color: '#8C8880', fontFamily: '"JetBrains Mono", system-ui, sans-serif', fontSize: '14px', letterSpacing: '0.08em', lineHeight: '18px' }}>
+          <span style={{ color: '#FF4F12', fontWeight: 700 }}>WHEEL</span> · NEXT SHEEP
+        </div>
+        <div style={{ boxSizing: 'border-box', color: '#8C8880', fontFamily: '"JetBrains Mono", system-ui, sans-serif', fontSize: '14px', letterSpacing: '0.08em', lineHeight: '18px' }}>
+          <span style={{ color: '#FF4F12', fontWeight: 700 }}>HOLD</span> · TALK
+        </div>
+      </div>
+    </div>
+  )

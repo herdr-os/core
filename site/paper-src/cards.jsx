@@ -1,0 +1,114 @@
+(
+    <div style={{ backgroundColor: '#000000', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', fontSize: '12px', fontSynthesis: 'none', gap: '18px', height: '640px', lineHeight: '16px', MozOsxFontSmoothing: 'grayscale', overflow: 'clip', overflowWrap: 'anywhere', paddingBottom: '18px', paddingInline: '22px', paddingTop: '22px', WebkitFontSmoothing: 'antialiased', width: '480px' }}>
+      <div style={{ alignItems: 'center', boxSizing: 'border-box', display: 'flex', gap: '14px', justifyContent: 'space-between', width: '100%' }}>
+        <div style={{ backgroundImage: 'url(https://app.paper.design/file-assets/01M625BYBEZ8W0D3H83MGGXJ3T/0YQMW2E6QSPGSGC9B0HY102Z0V.svg)', backgroundPosition: '50%', backgroundRepeat: 'no-repeat', backgroundSize: '100% 100%', boxSizing: 'border-box', flexShrink: '0', height: '52px', width: '52px' }} />
+        <div style={{ boxSizing: 'border-box', display: 'flex', flexDirection: 'column', flexGrow: '1', gap: '4px' }}>
+          <div style={{ boxSizing: 'border-box', color: '#F4EFE6', fontFamily: '"Space Grotesk", system-ui, sans-serif', fontSize: '28px', fontWeight: 700, letterSpacing: '-0.02em', lineHeight: '33px' }}>
+            The Herd
+          </div>
+          <div style={{ alignItems: 'center', boxSizing: 'border-box', display: 'flex', gap: '8px' }}>
+            <div style={{ backgroundColor: '#4ADE80', borderRadius: '50%', boxSizing: 'border-box', flexShrink: '0', height: '8px', width: '8px' }} />
+            <div style={{ boxSizing: 'border-box', color: '#4ADE80', fontFamily: '"JetBrains Mono", system-ui, sans-serif', fontSize: '13px', fontWeight: 600, letterSpacing: '0.08em', lineHeight: '16px' }}>
+              LIVE · 3 HOSTS
+            </div>
+          </div>
+        </div>
+        <div style={{ alignItems: 'center', backgroundColor: '#1C1C1C', borderRadius: '50%', boxSizing: 'border-box', display: 'flex', flexShrink: '0', height: '64px', justifyContent: 'center', width: '64px' }}>
+          <div style={{ boxSizing: 'border-box', display: 'flex', gap: '5px' }}>
+            <div style={{ backgroundColor: '#F4EFE6', borderRadius: '50%', boxSizing: 'border-box', flexShrink: '0', height: '6px', width: '6px' }} />
+            <div style={{ backgroundColor: '#F4EFE6', borderRadius: '50%', boxSizing: 'border-box', flexShrink: '0', height: '6px', width: '6px' }} />
+            <div style={{ backgroundColor: '#F4EFE6', borderRadius: '50%', boxSizing: 'border-box', flexShrink: '0', height: '6px', width: '6px' }} />
+          </div>
+        </div>
+      </div>
+      <div style={{ boxSizing: 'border-box', display: 'flex', gap: '8px', width: '100%' }}>
+        <div style={{ backgroundColor: '#F4EFE6', borderRadius: '999px', boxSizing: 'border-box', paddingBlock: '9px', paddingInline: '14px' }}>
+          <div style={{ boxSizing: 'border-box', color: '#000000', fontFamily: '"JetBrains Mono", system-ui, sans-serif', fontSize: '13px', fontWeight: 600, letterSpacing: '0.06em', lineHeight: '16px' }}>
+            ALL 6
+          </div>
+        </div>
+        <div style={{ alignItems: 'center', backgroundColor: '#1C1C1C', borderRadius: '999px', boxSizing: 'border-box', display: 'flex', gap: '8px', paddingBlock: '9px', paddingInline: '14px' }}>
+          <div style={{ boxSizing: 'border-box', color: '#F4EFE6', fontFamily: '"JetBrains Mono", system-ui, sans-serif', fontSize: '13px', fontWeight: 600, letterSpacing: '0.06em', lineHeight: '16px' }}>
+            CEREBRO
+          </div>
+          <div style={{ boxSizing: 'border-box', color: '#8C8880', fontFamily: '"JetBrains Mono", system-ui, sans-serif', fontSize: '13px', lineHeight: '16px' }}>
+            2
+          </div>
+        </div>
+        <div style={{ alignItems: 'center', backgroundColor: '#1C1C1C', borderRadius: '999px', boxSizing: 'border-box', display: 'flex', gap: '8px', paddingBlock: '9px', paddingInline: '14px' }}>
+          <div style={{ boxSizing: 'border-box', color: '#F4EFE6', fontFamily: '"JetBrains Mono", system-ui, sans-serif', fontSize: '13px', fontWeight: 600, letterSpacing: '0.06em', lineHeight: '16px' }}>
+            NAMEK
+          </div>
+          <div style={{ boxSizing: 'border-box', color: '#8C8880', fontFamily: '"JetBrains Mono", system-ui, sans-serif', fontSize: '13px', lineHeight: '16px' }}>
+            1
+          </div>
+        </div>
+        <div style={{ alignItems: 'center', backgroundColor: '#1C1C1C', borderRadius: '999px', boxSizing: 'border-box', display: 'flex', gap: '8px', paddingBlock: '9px', paddingInline: '14px' }}>
+          <div style={{ boxSizing: 'border-box', color: '#F4EFE6', fontFamily: '"JetBrains Mono", system-ui, sans-serif', fontSize: '13px', fontWeight: 600, letterSpacing: '0.06em', lineHeight: '16px' }}>
+            MBP
+          </div>
+          <div style={{ boxSizing: 'border-box', color: '#8C8880', fontFamily: '"JetBrains Mono", system-ui, sans-serif', fontSize: '13px', lineHeight: '16px' }}>
+            3
+          </div>
+        </div>
+      </div>
+      <div style={{ boxSizing: 'border-box', display: 'flex', flexGrow: '1', position: 'relative', width: '100%' }}>
+        <div style={{ backgroundColor: '#4D9ABF', borderRadius: '32px', bottom: '24px', boxSizing: 'border-box', position: 'absolute', right: '0px', top: '24px', width: '120px' }} />
+        <div style={{ backgroundColor: '#F3F3F1', borderRadius: '32px', bottom: '12px', boxSizing: 'border-box', position: 'absolute', right: '14px', top: '12px', width: '120px' }} />
+        <div style={{ backgroundColor: '#D97757', borderRadius: '32px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', flexShrink: '0', height: '100%', justifyContent: 'space-between', paddingBottom: '24px', paddingInline: '28px', paddingTop: '28px', position: 'relative', width: '404px' }}>
+          <div style={{ alignItems: 'center', boxSizing: 'border-box', display: 'flex', justifyContent: 'space-between' }}>
+            <div style={{ boxSizing: 'border-box', color: '#141413', fontFamily: '"JetBrains Mono", system-ui, sans-serif', fontSize: '13px', fontWeight: 600, letterSpacing: '0.1em', lineHeight: '16px' }}>
+              CEREBRO · ~/herdr-os
+            </div>
+            <div style={{ backgroundImage: 'url(https://app.paper.design/file-assets/01M625BYBEZ8W0D3H83MGGXJ3T/51RHHJCVBGVYHFJQ0VQVJRG5WT.svg)', backgroundPosition: '50%', backgroundRepeat: 'no-repeat', backgroundSize: '100% 100%', boxSizing: 'border-box', flexShrink: '0', height: '42px', width: '42px' }} />
+          </div>
+          <div style={{ boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <div style={{ boxSizing: 'border-box', color: '#141413', fontFamily: '"Space Grotesk", system-ui, sans-serif', fontSize: '44px', fontWeight: 700, letterSpacing: '-0.03em', lineHeight: '47px' }}>
+              Claude Code
+            </div>
+            <div style={{ boxSizing: 'border-box', color: '#141413', fontFamily: '"Space Grotesk", system-ui, sans-serif', fontSize: '20px', fontWeight: 500, lineHeight: '26px' }}>
+              Wire libghostty into the terminal view
+            </div>
+          </div>
+          <div style={{ boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ boxSizing: 'border-box', display: 'flex', gap: '8px' }}>
+              <div style={{ alignItems: 'center', backgroundColor: '#141413', borderRadius: '999px', boxSizing: 'border-box', display: 'flex', gap: '7px', paddingBlock: '7px', paddingInline: '12px' }}>
+                <div style={{ backgroundColor: '#D97757', borderRadius: '50%', boxSizing: 'border-box', flexShrink: '0', height: '6px', width: '6px' }} />
+                <div style={{ boxSizing: 'border-box', color: '#FAF9F5', fontFamily: '"JetBrains Mono", system-ui, sans-serif', fontSize: '14px', fontWeight: 600, letterSpacing: '0.06em', lineHeight: '18px' }}>
+                  OPUS 5.5
+                </div>
+              </div>
+              <div style={{ backgroundColor: '#0000001F', borderRadius: '999px', boxSizing: 'border-box', paddingBlock: '7px', paddingInline: '12px' }}>
+                <div style={{ boxSizing: 'border-box', color: '#141413', fontFamily: '"JetBrains Mono", system-ui, sans-serif', fontSize: '14px', fontWeight: 600, letterSpacing: '0.06em', lineHeight: '18px' }}>
+                  3 SUBAGENTS
+                </div>
+              </div>
+              <div style={{ backgroundColor: '#0000001F', borderRadius: '999px', boxSizing: 'border-box', paddingBlock: '7px', paddingInline: '12px' }}>
+                <div style={{ boxSizing: 'border-box', color: '#141413', fontFamily: '"JetBrains Mono", system-ui, sans-serif', fontSize: '14px', fontWeight: 600, letterSpacing: '0.06em', lineHeight: '18px' }}>
+                  2 TASKS
+                </div>
+              </div>
+            </div>
+            <div style={{ alignItems: 'center', boxSizing: 'border-box', display: 'flex', justifyContent: 'space-between' }}>
+              <div style={{ boxSizing: 'border-box', color: '#141413', fontFamily: '"Space Grotesk", system-ui, sans-serif', fontSize: '20px', fontWeight: 600, lineHeight: '24px' }}>
+                Needs decision
+              </div>
+              <div style={{ alignItems: 'center', backgroundColor: '#141413', borderRadius: '50%', boxSizing: 'border-box', display: 'flex', flexShrink: '0', height: '68px', justifyContent: 'center', width: '68px' }}>
+                <svg width="26" height="26" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style={{ display: 'inline-block', flexShrink: '0' }}>
+                  <path d="M4 12h15M13 6l6 6-6 6" fill="none" stroke="#F4EFE6" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style={{ alignItems: 'center', boxSizing: 'border-box', display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+        <div style={{ boxSizing: 'border-box', color: '#8C8880', fontFamily: '"Space Grotesk", system-ui, sans-serif', fontSize: '18px', lineHeight: '22px' }}>
+          <span style={{ color: '#FF4F12', fontWeight: 600 }}>1 needs you</span> · 3 working · 2 idle
+        </div>
+        <div style={{ boxSizing: 'border-box', color: '#F4EFE6', fontFamily: '"JetBrains Mono", system-ui, sans-serif', fontSize: '16px', fontWeight: 700, letterSpacing: '0.1em', lineHeight: '20px' }}>
+          1 / 6
+        </div>
+      </div>
+    </div>
+  )

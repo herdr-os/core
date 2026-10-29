@@ -1,0 +1,35 @@
+.gradle/
+.kotlin/
+build/
+out/
+local.properties
+.idea/
+*.iml
+.DS_Store
+
+# Your real config holds API keys; only the example is tracked.
+tools/r1ptt.json
+# Downloaded firmware, GSIs and patched boot images.
+firmware/
+*.img
+*.img.gz
+*.img.xz
+
+# Signing identities stay outside the repository; only public release certificates are published.
+*.jks
+*.keystore
+*.p12
+*.pfx
+
+__pycache__/
+*.pyc
+.gstack/
+
+node_modules/
+site/dist/
+site/.astro/
+# Built by bridge/scripts/build.mjs when the package is packed.
+bridge/dist/
+bridge/LICENSE
+# Working notes and decision trails stay local.
+.audit/

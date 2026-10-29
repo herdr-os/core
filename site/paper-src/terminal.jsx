@@ -1,0 +1,135 @@
+(
+    <div style={{ backgroundColor: '#000000', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', fontSize: '12px', fontSynthesis: 'none', gap: '12px', height: '640px', lineHeight: '16px', MozOsxFontSmoothing: 'grayscale', overflow: 'clip', overflowWrap: 'anywhere', paddingBottom: '16px', paddingInline: '16px', paddingTop: '18px', WebkitFontSmoothing: 'antialiased', width: '480px' }}>
+      <div style={{ alignItems: 'center', boxSizing: 'border-box', display: 'flex', gap: '12px', paddingInline: '6px', width: '100%' }}>
+        <div style={{ alignItems: 'center', backgroundColor: '#1C1C1C', borderRadius: '50%', boxSizing: 'border-box', display: 'flex', flexShrink: '0', height: '48px', justifyContent: 'center', width: '48px' }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style={{ display: 'inline-block', flexShrink: '0' }}>
+            <path d="M15 5l-7 7 7 7" fill="none" stroke="#F4EFE6" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </div>
+        <div style={{ alignItems: 'center', boxSizing: 'border-box', display: 'flex', flexGrow: '1', gap: '8px' }}>
+          <div style={{ backgroundImage: 'url(https://app.paper.design/file-assets/01M625BYBEZ8W0D3H83MGGXJ3T/41YV1ZGZ8JBXA8J7HBR02HMHVW.svg)', backgroundPosition: '50%', backgroundRepeat: 'no-repeat', backgroundSize: '100% 100%', boxSizing: 'border-box', flexShrink: '0', height: '30px', width: '30px' }} />
+          <div style={{ boxSizing: 'border-box', color: '#F4EFE6', fontFamily: '"Space Grotesk", system-ui, sans-serif', fontSize: '22px', fontWeight: 700, letterSpacing: '-0.01em', lineHeight: '28px' }}>
+            <span style={{ lineHeight: '28px' }}>Claude Code</span>
+          </div>
+        </div>
+        <div style={{ borderColor: '#2E2E2E', borderRadius: '999px', borderStyle: 'solid', borderWidth: '1.5px', boxSizing: 'border-box', paddingBlock: '7px', paddingInline: '11px' }}>
+          <div style={{ boxSizing: 'border-box', color: '#8C8880', fontFamily: '"JetBrains Mono", system-ui, sans-serif', fontSize: '13px', fontWeight: 600, letterSpacing: '0.08em', lineHeight: '16px' }}>
+            GHOSTTY · 48×22
+          </div>
+        </div>
+      </div>
+      <div style={{ backgroundColor: '#0A0A0A', borderRadius: '18px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', flexGrow: '1', justifyContent: 'end', overflow: 'clip', paddingBlock: '10px', paddingInline: '4px', width: '100%' }}>
+        <div style={{ alignItems: 'center', boxSizing: 'border-box', display: 'flex', gap: '8px', paddingBottom: '6px' }}>
+          <div style={{ backgroundColor: '#1E1E1E', boxSizing: 'border-box', flexGrow: '1', height: '1px' }} />
+          <div style={{ boxSizing: 'border-box', color: '#8C8880', fontFamily: '"JetBrains Mono", system-ui, sans-serif', fontSize: '13px', letterSpacing: '0.08em', lineHeight: '16px' }}>
+            212 LINES ABOVE
+          </div>
+          <div style={{ backgroundColor: '#1E1E1E', boxSizing: 'border-box', flexGrow: '1', height: '1px' }} />
+        </div>
+        <div style={{ boxSizing: 'border-box', display: 'flex', flexDirection: 'column', paddingBottom: '6px' }}>
+          <div style={{ backgroundColor: '#1A1A1A', boxSizing: 'border-box' }}>
+            <div style={{ boxSizing: 'border-box', color: '#8C8880', fontFamily: '"JetBrains Mono", system-ui, sans-serif', fontSize: '14.5px', lineHeight: '19px', width: 'max-content' }}>
+              &gt; Switch it. Keep plain lines behind a
+            </div>
+          </div>
+          <div style={{ backgroundColor: '#1A1A1A', boxSizing: 'border-box' }}>
+            <div style={{ boxSizing: 'border-box', color: '#8C8880', fontFamily: '"JetBrains Mono", system-ui, sans-serif', fontSize: '14.5px', lineHeight: '19px', whiteSpace: 'pre', width: 'max-content' }}>
+              {'  '}setting.{'                                    '}
+            </div>
+          </div>
+          <div style={{ boxSizing: 'border-box', color: '#D9D4CB', fontFamily: '"JetBrains Mono", system-ui, sans-serif', fontSize: '14.5px', lineHeight: '19px', width: 'max-content' }}>
+
+          </div>
+          <div style={{ boxSizing: 'border-box', color: '#D9D4CB', fontFamily: '"JetBrains Mono", system-ui, sans-serif', fontSize: '14.5px', lineHeight: '19px', width: 'max-content' }}>
+            ● I'll stream raw pane bytes into GhosttyVt
+          </div>
+          <div style={{ boxSizing: 'border-box', color: '#D9D4CB', fontFamily: '"JetBrains Mono", system-ui, sans-serif', fontSize: '14.5px', lineHeight: '19px', whiteSpace: 'pre', width: 'max-content' }}>
+            {'  '}and draw its snapshot with VtView.
+          </div>
+        </div>
+        <div style={{ boxSizing: 'border-box', color: '#8C8880', fontFamily: '"JetBrains Mono", system-ui, sans-serif', fontSize: '14.5px', lineHeight: '19px', width: 'max-content' }}>
+          ⏺ <span style={{ color: '#F4EFE6', fontWeight: 700 }}>Update</span>(app/…/TerminalActivity.kt)
+        </div>
+        <div style={{ boxSizing: 'border-box', color: '#8C8880', fontFamily: '"JetBrains Mono", system-ui, sans-serif', fontSize: '14.5px', lineHeight: '19px', whiteSpace: 'pre', width: 'max-content' }}>
+          {'  '}⎿ Updated with 6 additions, 2 removals
+        </div>
+        <div style={{ backgroundColor: '#3A1414', boxSizing: 'border-box' }}>
+          <div style={{ boxSizing: 'border-box', color: '#FF9C8A', fontFamily: '"JetBrains Mono", system-ui, sans-serif', fontSize: '14.5px', lineHeight: '19px', whiteSpace: 'pre', width: 'max-content' }}>
+             41 -{'    '}val lines = client.terminal(id){'    '}
+          </div>
+        </div>
+        <div style={{ backgroundColor: '#3A1414', boxSizing: 'border-box' }}>
+          <div style={{ boxSizing: 'border-box', color: '#FF9C8A', fontFamily: '"JetBrains Mono", system-ui, sans-serif', fontSize: '14.5px', lineHeight: '19px', whiteSpace: 'pre', width: 'max-content' }}>
+             42 -{'    '}render(lines){'                      '}
+          </div>
+        </div>
+        <div style={{ backgroundColor: '#10301C', boxSizing: 'border-box' }}>
+          <div style={{ boxSizing: 'border-box', color: '#7EE2A0', fontFamily: '"JetBrains Mono", system-ui, sans-serif', fontSize: '14.5px', lineHeight: '19px', whiteSpace: 'pre', width: 'max-content' }}>
+             41 +{'    '}val vt = GhosttyVt(cols, rows){'     '}
+          </div>
+        </div>
+        <div style={{ backgroundColor: '#10301C', boxSizing: 'border-box' }}>
+          <div style={{ boxSizing: 'border-box', color: '#7EE2A0', fontFamily: '"JetBrains Mono", system-ui, sans-serif', fontSize: '14.5px', lineHeight: '19px', whiteSpace: 'pre', width: 'max-content' }}>
+             42 +{'    '}stream.collect &#123; vt.write(it) &#125;{'    '}
+          </div>
+        </div>
+        <div style={{ backgroundColor: '#10301C', boxSizing: 'border-box' }}>
+          <div style={{ boxSizing: 'border-box', color: '#7EE2A0', fontFamily: '"JetBrains Mono", system-ui, sans-serif', fontSize: '14.5px', lineHeight: '19px', whiteSpace: 'pre', width: 'max-content' }}>
+             43 +{'    '}view.screen = vt.snapshot(){'        '}
+          </div>
+        </div>
+        <div style={{ boxSizing: 'border-box', color: '#D9D4CB', fontFamily: '"JetBrains Mono", system-ui, sans-serif', fontSize: '14.5px', lineHeight: '19px', width: 'max-content' }}>
+
+        </div>
+        <div style={{ boxSizing: 'border-box', color: '#8C8880', fontFamily: '"JetBrains Mono", system-ui, sans-serif', fontSize: '14.5px', lineHeight: '19px', width: 'max-content' }}>
+          ⏺ <span style={{ color: '#F4EFE6', fontWeight: 700 }}>Bash</span>(./gradlew :app:testDebugUnitTest)
+        </div>
+        <div style={{ boxSizing: 'border-box', color: '#8C8880', fontFamily: '"JetBrains Mono", system-ui, sans-serif', fontSize: '14.5px', lineHeight: '19px', whiteSpace: 'pre', width: 'max-content' }}>
+          {'  '}⎿ <span style={{ color: '#4ADE80' }}>BUILD SUCCESSFUL</span> in 2m 14s
+        </div>
+        <div style={{ boxSizing: 'border-box', color: '#D9D4CB', fontFamily: '"JetBrains Mono", system-ui, sans-serif', fontSize: '14.5px', lineHeight: '19px', width: 'max-content' }}>
+
+        </div>
+        <div style={{ boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div style={{ borderColor: '#D97757', borderRadius: '6px', borderStyle: 'solid', borderWidth: '1.5px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '2px', padding: '8px' }}>
+            <div style={{ boxSizing: 'border-box', color: '#F4EFE6', fontFamily: '"JetBrains Mono", system-ui, sans-serif', fontSize: '14.5px', lineHeight: '19px' }}>
+              Keep plain lines behind a setting?
+            </div>
+            <div style={{ backgroundColor: '#D97757', boxSizing: 'border-box' }}>
+              <div style={{ boxSizing: 'border-box', color: '#0A0A0A', fontFamily: '"JetBrains Mono", system-ui, sans-serif', fontSize: '14.5px', lineHeight: '19px', width: 'max-content' }}>
+                ❯ 1. Yes, add Settings → Terminal
+              </div>
+            </div>
+            <div style={{ boxSizing: 'border-box', color: '#8C8880', fontFamily: '"JetBrains Mono", system-ui, sans-serif', fontSize: '14.5px', lineHeight: '19px', whiteSpace: 'pre', width: 'max-content' }}>
+              {'  '}2. No, Ghostty only
+            </div>
+          </div>
+          <div style={{ boxSizing: 'border-box', color: '#8C8880', fontFamily: '"JetBrains Mono", system-ui, sans-serif', fontSize: '14.5px', lineHeight: '19px', width: 'max-content' }}>
+            ⏵⏵ auto-accept edits on · 41% context
+          </div>
+        </div>
+      </div>
+      <div style={{ alignItems: 'center', boxSizing: 'border-box', display: 'flex', justifyContent: 'space-between', paddingInline: '6px', width: '100%' }}>
+        <div style={{ boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '3px' }}>
+          <div style={{ alignItems: 'center', boxSizing: 'border-box', display: 'flex', gap: '8px' }}>
+            <div style={{ backgroundColor: '#4ADE80', borderRadius: '50%', boxSizing: 'border-box', flexShrink: '0', height: '8px', width: '8px' }} />
+            <div style={{ boxSizing: 'border-box', color: '#4ADE80', fontFamily: '"JetBrains Mono", system-ui, sans-serif', fontSize: '14px', fontWeight: 600, letterSpacing: '0.08em', lineHeight: '18px' }}>
+              LIVE · READ-ONLY
+            </div>
+          </div>
+          <div style={{ boxSizing: 'border-box', color: '#8C8880', fontFamily: '"JetBrains Mono", system-ui, sans-serif', fontSize: '14px', letterSpacing: '0.08em', lineHeight: '18px' }}>
+            WHEEL · SCROLLBACK
+          </div>
+        </div>
+        <div style={{ alignItems: 'center', backgroundColor: '#F4EFE6', borderRadius: '999px', boxSizing: 'border-box', display: 'flex', gap: '10px', height: '52px', paddingInline: '20px' }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style={{ display: 'inline-block', flexShrink: '0' }}>
+            <rect x="2.5" y="6" width="19" height="12" rx="2.5" fill="none" stroke="#0B0B0B" strokeWidth="2" />
+            <path d="M6 10h1M9.5 10h1M13 10h1M16.5 10h1M7.5 14h9" fill="none" stroke="#0B0B0B" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+          <div style={{ boxSizing: 'border-box', color: '#0B0B0B', fontFamily: '"Space Grotesk", system-ui, sans-serif', fontSize: '18px', fontWeight: 700, lineHeight: '22px' }}>
+            Type
+          </div>
+        </div>
+      </div>
+    </div>
+  )

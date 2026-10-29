@@ -1,0 +1,21 @@
+{
+  "name": "herdr-os-site",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "@fontsource-variable/jetbrains-mono": "^5.3.0",
+    "@fontsource-variable/space-grotesk": "^5.3.0",
+    "@yume-chan/adb": "2.6.4",
+    "@yume-chan/adb-credential-web": "2.1.0",
+    "@yume-chan/adb-daemon-webusb": "2.3.2",
+    "@zip.js/zip.js": "2.24.0",
+    "android-fastboot": "1.1.3",
+    "astro": "^7.4.4",
+    "gsap": "^3.15.0"
+  }
+}

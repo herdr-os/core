@@ -1,0 +1,16 @@
+---
+// One R1 screen, rebuilt in HTML from its Paper artboard (src/screens/<name>.astro), drawn at the
+// panel's 480×640 and scaled to whatever holds it.
+const screens = import.meta.glob<{ default: any }>("../screens/*.astro", { eager: true });
+interface Props { name: string; hidden?: boolean }
+const { name, hidden } = Astro.props;
+const Built = screens[`../screens/${name}.astro`]?.default;
+if (!Built) throw new Error(`No screen "${name}": convert its Paper artboard with tools/paper2astro.mjs`);
+---
+<div class="pscreen" data-screen={name} style={hidden ? "opacity:0" : undefined}><div class="pscale"><Built /></div></div>
+
+<style>
+  .pscreen { position: absolute; inset: 0; container-type: inline-size; overflow: hidden; }
+  /* tan(atan2(a, b)) is a / b without units: the screen's width over the panel's 480 px. */
+  .pscale { width: 480px; height: 640px; transform-origin: 0 0; transform: scale(tan(atan2(100cqw, 480px))); }
+</style>

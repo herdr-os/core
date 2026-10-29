@@ -1,0 +1,289 @@
+---
+import "../styles/global.css";
+import debloatText from "../../../tools/debloat.txt?raw";
+import { debloatList } from "../install/files.ts";
+
+const debloat = debloatList(debloatText);
+
+const steps = ["Unlock", "Flash LineageOS", "Root", "Herdr OS", "Pair"];
+---
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Install Herdr OS · from Chrome</title>
+  <meta name="description" content="Take a stock Rabbit R1 to Herdr OS over USB, from Chrome: unlock, LineageOS, root, Herdr OS, pairing." />
+  <meta name="theme-color" content="#000000" />
+  <link rel="icon" href="/sheep/sheep-plain.svg" type="image/svg+xml" />
+</head>
+<body>
+  <nav class="nav solid">
+    <a class="brand" href="/"><img src="/sheep/sheep-plain.svg" alt="" />Herdr<b>OS</b></a>
+    <span class="mono dim">Installer</span>
+  </nav>
+
+  <main class="wrap">
+    <section class="head">
+      <div>
+        <p class="mono dim">Herdr OS · USB installer for Chrome</p>
+        <h1 class="display">Stock R1 to <span class="orange">Herdr OS</span>, from this tab.</h1>
+        <p class="lede">The same commands as our install scripts, sent over USB by the browser. Five steps, about an hour, most of it waiting. Each step says what it will do before it runs, and nothing is erased until you confirm it by name.</p>
+
+        <div class="notice" data-unsupported hidden>
+          <b>This browser can't talk to the R1.</b>
+          <p>The installer needs WebUSB, which Chrome and Edge have on a computer, opened over HTTPS. Safari and Firefox don't support it. You can still dry-run every step here to read the exact commands.</p>
+        </div>
+
+        <ul class="before">
+          <li><b>Quit adb on this computer.</b> A running adb server holds the R1 and the browser can't reach it. Run <code>adb kill-server</code> and close other flashing tools.</li>
+          <li><b>Use a USB-C data cable</b> straight into the computer, not a hub.</li>
+          <li><b>Know the risks.</b> Unlocking voids the warranty. Rabbit's <a class="u" href="https://rabbit-hmi-oss.github.io/flashing/">flash tool</a> can always put stock rabbitOS back.</li>
+        </ul>
+      </div>
+
+      <aside class="status">
+        <div class="r1">
+          <div class="screen"><div class="mode-screen"><span class="mono dim">Mode</span><b data-screen-mode>No R1</b><i></i></div></div>
+          <div class="pocket cam"></div><div class="pocket wheel"><i></i></div><div class="ptt"></div>
+        </div>
+        <p class="mono"><span class="dim">Device</span> <span data-mode>No R1</span></p>
+        <p class="dim small" data-mode-says></p>
+        <div class="row">
+          <button class="pill orange" data-choose>Choose the R1</button>
+          <label class="toggle"><input type="checkbox" id="dry" /><span>Dry run</span></label>
+        </div>
+        <p class="dim small">Dry run logs every command instead of sending it. The R1 isn't touched.</p>
+      </aside>
+    </section>
+
+    <nav class="tabs" aria-label="Steps">
+      {steps.map((s, i) => <button class="tab" data-goto={i + 1}><span class="mono">0{i + 1}</span>{s}</button>)}
+    </nav>
+
+    <section class="step" data-step="1">
+      <h2 class="display">Unlock the bootloader</h2>
+      <div class="cols">
+        <div>
+          <h3 class="mono dim">What this does</h3>
+          <ol>
+            <li>First, on Rabbit's side: follow Rabbit's <a class="u" href="https://www.rabbit.tech/support/article/unlock-bootloader-rabbit-r1">unlock article</a>. In OS3, <b>settings → r1</b>, request developer mode for this R1 (warranty acknowledgment and its IMEI). Then, with the R1 on and online, <b>settings → r1 → device modification → unlock</b>. That only gives the R1 permission; nothing is unlocked yet.</li>
+            <li><b>Enter fastboot.</b> The R1 has no volume keys. Power it off, press the button below, then plug it in. For about 1.5 seconds it shows a serial port; choose <b>MT65xx Preloader</b> in Chrome's list fast. If you miss it, unplug and plug in again: once Chrome knows the port, the page catches it on its own and answers <code>FASTBOOT</code>.</li>
+            <li><b>Check the permission.</b> Runs <code>fastboot flashing get_unlock_ability</code>, which must say 1. If it says 0, reboot the R1, leave it online a minute and request the unlock again.</li>
+            <li><b>Unlock.</b> Runs <code>fastboot flashing unlock</code>, then checks <code>getvar unlocked</code>. This erases the R1. If it asks, confirm with the side button.</li>
+          </ol>
+        </div>
+        <div class="console">
+          <div class="actions">
+            <button class="pill orange" data-run="enter">Enter fastboot</button>
+            <button class="pill ghost" data-run="ability">Check permission</button>
+            <button class="pill ghost" data-run="unlock">Unlock…</button>
+          </div>
+          <div class="progress" data-progress hidden></div>
+          <div class="log" data-log role="log" aria-live="polite"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="step" data-step="2" hidden>
+      <h2 class="display">Flash LineageOS</h2>
+      <div class="cols">
+        <div>
+          <h3 class="mono dim">What this does</h3>
+          <ol>
+            <li>Reads four small images out of Rabbit's firmware zip, on this computer: vbmeta, vbmeta_system, vbmeta_vendor and the empty userdata.</li>
+            <li>Decompresses the LineageOS image in the browser.</li>
+            <li>Turns verified boot off: patched vbmeta images on both slots.</li>
+            <li><b>Erases all data</b> the way Rabbit's restore does: erase userdata, then the empty userdata image.</li>
+            <li>Reboots into fastbootd, cancels any half-done update, reads the active slot and deletes Rabbit's <code>product</code> partition there (its launcher and services).</li>
+            <li>Writes LineageOS to that slot's <code>system</code> and reboots. Rabbit's kernel and vendor stay. First boot takes a few minutes.</li>
+          </ol>
+          <h3 class="mono dim">Files from your disk</h3>
+          <label class="file"><span><b>rabbitOS v0.8.293 zip</b><small class="dim">rabbit_OS_v0.8.293.zip from <a class="u" href="https://github.com/rabbit-hmi-oss/firmware/releases">rabbit-hmi-oss/firmware</a></small></span><input type="file" id="stock" accept=".zip" /></label>
+          <label class="file"><span><b>LineageOS 21 GSI</b><small class="dim">Andy Yan's lineage-21-pre-qpr2-td, the <code>arm64_bvN</code> .img.gz, from <a class="u" href="https://sourceforge.net/projects/andyyan-gsi/files/">SourceForge</a></small></span><input type="file" id="gsi" accept=".gz,.img" /></label>
+        </div>
+        <div class="console">
+          <div class="actions"><button class="pill orange" data-run="flash">Flash LineageOS…</button></div>
+          <div class="progress" data-progress hidden></div>
+          <div class="log" data-log role="log" aria-live="polite"></div>
+          <p class="dim small">Start with the R1 in fastboot (step 1's button). Afterwards, go through LineageOS setup on the R1, connect to Wi-Fi and turn on USB debugging if it isn't already.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="step" data-step="3" hidden>
+      <h2 class="display">Root with Magisk</h2>
+      <div class="cols">
+        <div>
+          <h3 class="mono dim">What this does</h3>
+          <ol>
+            <li>Downloads Magisk v30.7 from this site and checks its sha256.</li>
+            <li>Restarts adb as root (LineageOS is a userdebug build) and reads the active slot.</li>
+            <li>Installs the Magisk app and copies Magisk's patch script and binaries to the R1.</li>
+            <li>Copies the R1's own boot image and patches it there with Magisk's script.</li>
+            <li><b>Saves the unpatched boot image to your downloads.</b> Keep it: flashing it back unroots.</li>
+            <li>Reboots to fastboot, writes the patched image to the active slot's <code>boot</code> and reboots.</li>
+          </ol>
+        </div>
+        <div class="console">
+          <div class="actions"><button class="pill orange" data-run="root">Root…</button></div>
+          <div class="progress" data-progress hidden></div>
+          <div class="log" data-log role="log" aria-live="polite"></div>
+          <p class="dim small">Start with LineageOS booted and USB debugging on. Magisk shows “additional setup” until the next step finishes it.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="step" data-step="4" hidden>
+      <h2 class="display">Install Herdr OS</h2>
+      <div class="cols">
+        <div>
+          <h3 class="mono dim">What this does</h3>
+          <ol>
+            <li>Downloads the app, the Magisk module and Magisk, and checks each sha256.</li>
+            <li>Finishes Magisk's setup and installs the module (button and wheel mapping, power defaults).</li>
+            <li>Installs the app with its permissions, grants it root and makes it the home screen.</li>
+            <li>Sets a 15 s screen timeout, low brightness, the screen density, a dark theme in the R1's orange and a one-line lock clock.</li>
+            <li>Disables the installed system apps from our debloat list (reversible with <code>pm enable</code>).<details><summary class="dim">The {debloat.length} packages</summary><p class="mono pkgs dim">{debloat.join(" · ")}</p></details></li>
+            <li>Reboots. Speech keys aren't sent from here: you type them on the R1 later.</li>
+          </ol>
+          <div class="opts">
+            <label class="toggle"><input type="checkbox" id="debloat" checked /><span>Disable unneeded apps</span></label>
+            <label class="num"><span>Density</span><input type="number" id="density" value="190" min="0" max="480" /><small class="dim">0 leaves it</small></label>
+          </div>
+        </div>
+        <div class="console">
+          <div class="actions"><button class="pill orange" data-run="provision">Install Herdr OS</button></div>
+          <div class="progress" data-progress hidden></div>
+          <div class="log" data-log role="log" aria-live="polite"></div>
+          <p class="dim small">Safe to run again, for example after an app update.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="step" data-step="5" hidden>
+      <h2 class="display">Pair with your bridge</h2>
+      <div class="cols">
+        <div>
+          <h3 class="mono dim">What this does</h3>
+          <p>The R1 talks only to the bridge on the computer that runs Herdr. Start it there (Node 24 or newer), then print a one-time pairing code as a QR code.</p>
+          <ol class="steps">
+            <li><b>Run the bridge</b><code>cd bridge && node src/main.ts serve --tailscale</code></li>
+            <li><b>Print a pairing QR code</b><code>node src/main.ts enroll --qr --tailscale</code></li>
+            <li><b>Scan it on the R1</b><span class="dim">Machines &amp; pairing, Scan QR code. Point the camera at the code and confirm the bridge address it shows.</span></li>
+          </ol>
+        </div>
+        <div>
+          <p class="dim">The QR code holds only the bridge address and the one-time code, and it expires with the code. Tailscale on the R1, TLS and other options are in <code>docs/HERDR.md</code>.</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="stopbar"><span class="mono">Working…</span><button class="pill ghost" data-stop>Stop waiting</button><small class="dim">Stops a wait for the R1. It never interrupts a write.</small></div>
+  </main>
+
+  <dialog id="confirm">
+    <form method="dialog">
+      <p class="mono orange">Confirm</p>
+      <h3 data-confirm-title></h3>
+      <p data-confirm-erases></p>
+      <p class="dim small" data-confirm-dry>Dry run: the commands are only logged.</p>
+      <div class="row">
+        <button class="pill orange" value="yes">Yes, go ahead</button>
+        <button class="pill ghost" value="no" autofocus>Cancel</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script>
+    import { start } from "../install/ui.ts";
+    start();
+  </script>
+</body>
+</html>
+
+<style>
+  main { padding-top: 110px; padding-bottom: 120px; }
+  code { font-family: var(--mono); font-size: .86em; background: var(--raised); padding: 2px 7px; border-radius: 8px; }
+  .u { text-decoration: underline; text-underline-offset: 3px; text-decoration-color: #ffffff40; }
+  .small { font-size: 14px; }
+  .head { display: grid; grid-template-columns: 1.3fr .7fr; gap: 5vw; align-items: start; }
+  .head h1 { font-size: clamp(44px, 6vw, 92px); margin: 18px 0 22px; }
+  .lede { max-width: 52ch; color: #d9d3c9; }
+  .notice { margin-top: 28px; background: var(--raised); border-radius: 22px; padding: 22px 24px; }
+  .notice b { font-size: 20px; }
+  .notice p { margin-top: 6px; color: #d9d3c9; }
+  .before { list-style: none; margin-top: 28px; display: grid; gap: 10px; max-width: 60ch; }
+  .before li { color: #cfc9bf; font-size: 16px; }
+  .before b { color: var(--fg); }
+  .status { display: grid; gap: 12px; justify-items: start; position: sticky; top: 90px; }
+  .status .r1 { --w: min(300px, 70vw); margin-bottom: 10px; }
+  .mode-screen { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; gap: 6px; }
+  .mode-screen b { font-size: calc(var(--w) * .085); letter-spacing: -.02em; }
+  .mode-screen i { justify-self: center; width: 10px; height: 10px; border-radius: 50%; background: var(--dim); }
+  :global([data-device="fastboot"], [data-device="fastbootd"], [data-device="adb"], [data-device="preloader"]) .mode-screen i { background: var(--ok); box-shadow: 0 0 14px var(--ok); }
+  .row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  button.pill { border: 0; cursor: pointer; font-family: var(--sans); }
+  button.pill:disabled { opacity: .4; cursor: default; transform: none; }
+  :global(body.busy) [data-run], :global(body.busy) [data-choose] { opacity: .4; pointer-events: none; }
+  .toggle { display: inline-flex; gap: 10px; align-items: center; cursor: pointer; font-weight: 600; }
+  .toggle input { appearance: none; width: 46px; height: 28px; border-radius: 99px; background: var(--raised); position: relative; cursor: pointer; transition: background .2s; }
+  .toggle input::after { content: ""; position: absolute; top: 4px; left: 4px; width: 20px; height: 20px; border-radius: 50%; background: var(--dim); transition: transform .2s, background .2s; }
+  .toggle input:checked { background: var(--fg); }
+  .toggle input:checked::after { transform: translateX(18px); background: #0a0a0a; }
+  .toggle input:disabled { opacity: .6; }
+
+  .tabs { margin: 9vh 0 40px; display: flex; flex-wrap: wrap; gap: 10px; }
+  .tab { border: 0; cursor: pointer; font-family: var(--sans); font-size: 16px; font-weight: 700; color: var(--dim); background: var(--raised); height: 48px; padding: 0 20px; border-radius: 999px; display: inline-flex; gap: 10px; align-items: center; }
+  .tab .mono { font-size: 12px; }
+  .tab[aria-current="true"] { background: var(--fg); color: #0a0a0a; }
+
+  .step h2 { font-size: clamp(36px, 4.4vw, 64px); margin-bottom: 36px; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 4vw; align-items: start; }
+  .step h3 { margin: 0 0 14px; }
+  .step h3:not(:first-child) { margin-top: 32px; }
+  .step ol { padding-left: 1.2em; display: grid; gap: 12px; color: #d9d3c9; font-size: 17px; }
+  .step ol b { color: var(--fg); }
+  .step ol.steps { list-style: none; padding: 0; margin-top: 22px; }
+  .steps li { counter-increment: s; background: var(--raised); border-radius: 22px; padding: 22px 24px; display: grid; gap: 10px; }
+  .steps code { background: #000; padding: 12px 14px; border-radius: 12px; overflow-x: auto; white-space: nowrap; display: block; }
+  .console { display: grid; gap: 14px; position: sticky; top: 90px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; }
+  .log { background: var(--field); border-radius: 22px; padding: 18px 20px; min-height: 260px; max-height: 52vh; overflow: auto; font-family: var(--mono); font-size: 13px; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+  .log:empty::before { content: "The log appears here."; color: var(--dim); }
+  .log :global(.cmd) { color: var(--fg); font-weight: 700; }
+  .log :global(.out) { color: var(--dim); }
+  .log :global(.ok) { color: var(--ok); }
+  .log :global(.warn) { color: var(--fg); }
+  .log :global(.warn)::before { content: "!! "; }
+  .log :global(.err) { color: var(--fg); font-weight: 700; }
+  .log :global(.err)::before { content: "xx "; color: var(--accent); }
+  .progress { position: relative; height: 34px; border-radius: 99px; background: var(--raised); overflow: hidden; --p: 0; }
+  .progress::before { content: ""; position: absolute; inset: 0; background: var(--fg); transform-origin: left; transform: scaleX(var(--p)); }
+  .progress::after { content: attr(data-label); position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--mono); font-size: 12px; color: var(--dim); mix-blend-mode: difference; }
+  .file { display: flex; justify-content: space-between; align-items: center; gap: 16px; background: var(--raised); border-radius: 22px; padding: 16px 20px; margin-bottom: 10px; flex-wrap: wrap; }
+  .file span { display: grid; gap: 2px; }
+  .file small { font-size: 14px; }
+  .file input { font-family: var(--sans); font-size: 14px; color: var(--dim); max-width: 100%; }
+  .file input::file-selector-button { border: 0; border-radius: 99px; padding: 10px 16px; margin-right: 10px; background: var(--accent); color: #0a0a0a; font-weight: 700; font-family: var(--sans); cursor: pointer; }
+  details summary { cursor: pointer; font-size: 15px; margin-top: 6px; }
+  .pkgs { text-transform: none; letter-spacing: 0; font-weight: 400; font-size: 12px; margin-top: 8px; }
+  .opts { margin-top: 28px; display: flex; flex-wrap: wrap; gap: 24px; align-items: center; }
+  .num { display: inline-flex; gap: 10px; align-items: center; font-weight: 600; }
+  .num input { width: 84px; height: 40px; border: 0; border-radius: 99px; background: var(--raised); color: var(--fg); padding: 0 14px; font-family: var(--mono); font-size: 15px; }
+
+  .stopbar { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 40; display: none; gap: 14px; align-items: center; background: #1c1c1cee; backdrop-filter: blur(12px); padding: 10px 12px 10px 22px; border-radius: 999px; max-width: calc(100vw - 32px); flex-wrap: wrap; }
+  :global(body.busy) .stopbar { display: flex; }
+
+  dialog { margin: auto; max-width: min(520px, calc(100vw - 32px)); background: var(--raised); color: var(--fg); border: 0; border-radius: 28px; padding: 30px; }
+  dialog .pill:focus-visible { outline: 2px solid var(--fg); outline-offset: 3px; }
+  dialog::backdrop { background: #000c; backdrop-filter: blur(6px); }
+  dialog h3 { font-size: 28px; letter-spacing: -.02em; margin: 10px 0 12px; line-height: 1.1; }
+  dialog p { margin-bottom: 18px; }
+
+  @media (max-width: 900px) {
+    .head, .cols { grid-template-columns: 1fr; }
+    .status, .console { position: static; }
+    .head .status { order: -1; }
+  }
+</style>

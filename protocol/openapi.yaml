@@ -1,0 +1,488 @@
+openapi: 3.1.0
+info:
+  title: Herdr Companion Bridge
+  version: "1"
+  description: |
+    The contract between a Herdr OS device (Rabbit R1) and its self-hosted bridge. Source of truth
+    for `bridge/src/protocol.ts` and `app/src/main/java/dev/r1ptt/herdr/model/Models.kt`;
+    `bridge/tests/openapi.test.ts` fails if a bridge route is missing here.
+
+    Mutations:
+    - every mutating request carries an `Idempotency-Key` (8–128 of `[A-Za-z0-9_.:-]`); a retried
+      key returns the original receipt and never dispatches twice;
+    - refusals after the key is recorded come back as HTTP 200 with a `rejected` receipt whose
+      `detail` starts with a machine code (`approval_changed: …`);
+    - transport failures toward Herdr settle as `unknown` (the write may have landed); clients
+      settle uncertainty with `GET /v1/actions?idempotency_key=`, never by resending.
+
+    Errors outside a receipt use `{ "error": { "code", "message", "details"? } }`.
+servers:
+  - url: https://bridge.example.ts.net
+security:
+  - device: []
+
+components:
+  securitySchemes:
+    device:
+      type: http
+      scheme: bearer
+      description: Device token from `/v1/enrollments/claim`. Scopes gate routes (read, act, review, admin).
+  parameters:
+    SessionId:
+      name: id
+      in: path
+      required: true
+      description: Machine-qualified session id, e.g. `local/w1:p1`. Percent-encode `/`.
+      schema: { type: string }
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema: { type: string, pattern: "^[A-Za-z0-9_.:-]{8,128}$" }
+  schemas:
+    AgentState:
+      type: string
+      enum: [approval_required, blocked, failed, completed_unseen, working, idle, disconnected]
+      description: Deck order, highest first; priorities 60, 50, 40, 30, 20, 10, 0.
+    Machine:
+      type: object
+      required: [machine_id, label, kind, status]
+      properties:
+        machine_id: { type: string }
+        label: { type: string }
+        kind: { type: string, enum: [local, ssh] }
+        status: { type: string, enum: [connected, disconnected] }
+        last_seen_at: { type: [string, "null"], format: date-time }
+        herdr_version: { type: [string, "null"] }
+    Session:
+      type: object
+      required: [session_id, machine_id, machine_label, agent, state, priority, generation, stale]
+      properties:
+        session_id: { type: string }
+        machine_id: { type: string }
+        machine_label: { type: string }
+        agent: { type: string, description: "claude, codex, pi, or another adapter's kind" }
+        name: { type: [string, "null"] }
+        title: { type: string }
+        project: { type: string }
+        cwd: { type: [string, "null"] }
+        state: { $ref: "#/components/schemas/AgentState" }
+        herdr_status: { type: string, enum: [idle, working, blocked, done, unknown] }
+        priority: { type: integer }
+        generation: { type: integer, description: Bumps when the agent restarts; actions bound to an older one are refused. }
+        state_since: { type: string, format: date-time }
+        stale: { type: boolean, description: The machine is unreachable; this is the last known state. }
+        pending_approval_id: { type: [string, "null"] }
+        summary: { type: string }
+    Insight:
+      type: object
+      required: [session_id, harness, model, effort, context, subagents, tasks, last_reply, limit, messages, read_at]
+      properties:
+        session_id: { type: string }
+        harness: { type: string }
+        model: { type: [string, "null"] }
+        effort: { type: [string, "null"] }
+        context:
+          type: [object, "null"]
+          properties: { used: { type: integer }, window: { type: [integer, "null"] } }
+        subagents:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: string }
+              description: { type: string }
+              type: { type: [string, "null"] }
+              state: { type: string, enum: [working, done, failed] }
+              started_at: { type: string }
+              ended_at: { type: [string, "null"] }
+              step: { type: [string, "null"], description: "Latest tool step or words from the subagent's own transcript." }
+              model: { type: [string, "null"] }
+              context_used: { type: [integer, "null"] }
+              active_at: { type: [string, "null"] }
+        tasks:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: string }
+              command: { type: string }
+              state: { type: string, enum: [running, done, failed, stopped] }
+              started_at: { type: string }
+              ended_at: { type: [string, "null"] }
+              exit_code: { type: [integer, "null"] }
+              tail: { type: array, items: { type: string }, description: "Last output lines, sanitized and redacted." }
+        messages:
+          type: array
+          description: The last 30 turns, oldest first. Your plain messages and the agent's text; tool calls, tool results and harness notices are left out.
+          items:
+            type: object
+            required: [role, text, at, photo]
+            properties:
+              role: { type: string, enum: [you, agent] }
+              text: { type: string }
+              at: { type: string }
+              photo: { type: [string, "null"], description: "Path on the agent's machine of a photo sent with POST /attachments; `text` is then the note." }
+        step: { type: [string, "null"], description: "The agent's latest tool step, e.g. \"Bash: Run the device check\" (Claude Code); null when unknown." }
+        last_reply:
+          type: [object, "null"]
+          properties: { text: { type: string }, at: { type: string } }
+        limit:
+          type: [object, "null"]
+          properties: { message: { type: string }, at: { type: string } }
+        read_at: { type: string }
+    Approval:
+      type: object
+      required: [approval_id, session_id, generation, question, options, evidence_fingerprint, status]
+      properties:
+        approval_id: { type: string }
+        session_id: { type: string }
+        generation: { type: integer }
+        question: { type: string }
+        options:
+          type: array
+          items:
+            type: object
+            required: [index, label]
+            properties:
+              index: { type: integer }
+              label: { type: string }
+              key: { type: string }
+        evidence_fingerprint: { type: string, description: Hash of the screen the question was parsed from. Answers must echo it. }
+        evidence: { type: string, description: Redacted terminal excerpt. }
+        parse: { type: string, enum: [structured, heuristic, free_text] }
+        status: { type: string, enum: [open, resolved, expired] }
+        created_at: { type: string, format: date-time }
+    Event:
+      type: object
+      required: [event_id, cursor, occurred_at, type, payload]
+      properties:
+        event_id: { type: string }
+        cursor: { type: string, description: Opaque. Resume with `?after=` or `Last-Event-ID`. }
+        occurred_at: { type: string, format: date-time }
+        machine_id: { type: [string, "null"] }
+        session_id: { type: [string, "null"] }
+        generation: { type: [integer, "null"] }
+        type:
+          type: string
+          enum: [agent.started, agent.progress, agent.blocked, agent.failed, agent.completed, agent.idle, agent.removed,
+            terminal.output, changes.updated, approval.requested, approval.resolved, machine.connected, machine.disconnected, action.receipt]
+        payload: { type: object }
+    Receipt:
+      type: object
+      required: [action_id, idempotency_key, kind, status]
+      properties:
+        action_id: { type: string }
+        idempotency_key: { type: string }
+        device_id: { type: string }
+        kind: { type: string }
+        scope: { type: object, description: "session, machine, agent, generation and action-specific binding (revision, evidence)" }
+        status: { type: string, enum: [pending, accepted, rejected, unknown] }
+        detail: { type: [string, "null"], description: "`code: message` when rejected or unknown." }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+        result: { type: [object, "null"] }
+    ReceiptResponse:
+      type: object
+      required: [receipt]
+      properties:
+        receipt: { $ref: "#/components/schemas/Receipt" }
+    ChangedFile:
+      type: object
+      required: [file_id, path, status, additions, deletions, content]
+      properties:
+        file_id: { type: string }
+        path: { type: string }
+        old_path: { type: [string, "null"] }
+        status: { type: string, enum: [modified, added, deleted, renamed, untracked, submodule, binary] }
+        additions: { type: integer }
+        deletions: { type: integer }
+        content: { type: string, enum: [text, binary, too_large, withheld, submodule, deleted], description: "`withheld` paths (env files, keys, credentials) are never sent." }
+    Hunk:
+      type: object
+      properties:
+        hunk_id: { type: string }
+        header: { type: string }
+        old_start: { type: integer }
+        new_start: { type: integer }
+        lines:
+          type: array
+          items:
+            type: object
+            properties:
+              kind: { type: string, enum: [context, add, del] }
+              old: { type: [integer, "null"] }
+              new: { type: [integer, "null"] }
+              text: { type: string }
+    TerminalLine:
+      type: object
+      properties:
+        text: { type: string }
+        redacted: { type: boolean }
+        spans:
+          type: array
+          items:
+            type: object
+            properties:
+              start: { type: integer }
+              end: { type: integer }
+              fg: { type: [integer, "null"], description: "ANSI color 0–15, or a 256-color index" }
+              bold: { type: boolean }
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code: { type: string }
+            message: { type: string }
+            details: { type: object }
+  responses:
+    Error:
+      description: Refused before any receipt was recorded.
+      content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
+    Receipt:
+      description: The action's receipt. Check `status`; only `accepted` means the host took it.
+      content: { application/json: { schema: { $ref: "#/components/schemas/ReceiptResponse" } } }
+
+paths:
+  /v1/health:
+    get:
+      security: []
+      summary: Liveness and protocol version.
+      responses: { "200": { description: "`{ ok, protocol }`" } }
+  /v1/enrollments/claim:
+    post:
+      security: []
+      summary: Trade a one-time code (from `herdr-bridge enroll`) for a device token.
+      requestBody:
+        content: { application/json: { schema: { type: object, required: [code], properties: { code: { type: string }, name: { type: string } } } } }
+      responses:
+        "200": { description: "`{ device_id, token, scopes, protocol }`" }
+        "400": { $ref: "#/components/responses/Error" }
+  /v1/me:
+    get: { summary: This device and the protocol version., responses: { "200": { description: "`{ device, protocol }`" } } }
+  /v1/machines:
+    get:
+      summary: Machines this device may see.
+      responses: { "200": { description: "`{ machines: Machine[] }`" } }
+  /v1/agents:
+    get:
+      summary: Sessions, optionally for one machine.
+      parameters: [{ name: machine_id, in: query, schema: { type: string } }]
+      responses: { "200": { description: "`{ agents: Session[], cursor }`" } }
+  /v1/snapshot:
+    get:
+      summary: Everything the deck needs, plus the cursor to stream from.
+      responses:
+        "200":
+          description: Snapshot.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  cursor: { type: string }
+                  machines: { type: array, items: { $ref: "#/components/schemas/Machine" } }
+                  agents: { type: array, items: { $ref: "#/components/schemas/Session" } }
+                  approvals: { type: array, items: { $ref: "#/components/schemas/Approval" } }
+                  synced_at: { type: string, format: date-time }
+  /v1/events:
+    get:
+      summary: Event feed. `Accept text/event-stream` streams (keepalive every 15 s); otherwise one JSON page.
+      description: |
+        Events after `after` (or `Last-Event-ID`). A cursor older than the retained log yields
+        `reset_required` (re-fetch the snapshot). A revoked token receives `revoked` and the stream ends.
+      parameters: [{ name: after, in: query, schema: { type: string } }]
+      responses: { "200": { description: "`{ events: Event[], reset_required, cursor }` or an SSE stream of Event" } }
+  /v1/activity:
+    get:
+      summary: Recent significant events across visible sessions.
+      parameters: [{ name: limit, in: query, schema: { type: integer, default: 30 } }]
+      responses: { "200": { description: "`{ events: Event[] }`" } }
+  /v1/sessions/{id}:
+    get:
+      summary: One session and its open approval; marks a completion as seen.
+      parameters: [{ $ref: "#/components/parameters/SessionId" }]
+      responses: { "200": { description: "`{ session: Session, approval: Approval | null }`" }, "404": { $ref: "#/components/responses/Error" } }
+  /v1/sessions/{id}/activity:
+    get:
+      parameters: [{ $ref: "#/components/parameters/SessionId" }, { name: cursor, in: query, schema: { type: string } }]
+      responses: { "200": { description: "`{ events: Event[] }`" } }
+  /v1/sessions/{id}/insight:
+    get:
+      summary: What the agent's own session file says (model, context use, subagents, background commands, last reply, usage limit). `insight` is null when the harness or machine can't be read.
+      parameters: [{ $ref: "#/components/parameters/SessionId" }]
+      responses:
+        "200":
+          description: Insight.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  insight:
+                    oneOf: [{ $ref: "#/components/schemas/Insight" }, { type: "null" }]
+  /v1/sessions/{id}/terminal/snapshot:
+    get:
+      summary: Sanitized terminal output (escapes neutralized, secrets redacted).
+      parameters:
+        - { $ref: "#/components/parameters/SessionId" }
+        - { name: max_lines, in: query, schema: { type: integer, minimum: 1, maximum: 1000, default: 200 } }
+        - { name: mode, in: query, schema: { type: string, enum: [compact, raw], default: compact } }
+      responses:
+        "200":
+          description: Snapshot.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  session_id: { type: string }
+                  generation: { type: integer }
+                  mode: { type: string }
+                  cwd: { type: [string, "null"] }
+                  revision: { type: integer }
+                  truncated: { type: boolean }
+                  redactions: { type: integer }
+                  neutralized: { type: integer }
+                  stream: { type: string, enum: [live, offline] }
+                  captured_at: { type: string, format: date-time }
+                  lines: { type: array, items: { $ref: "#/components/schemas/TerminalLine" } }
+  /v1/sessions/{id}/changes:
+    get:
+      summary: The current revision of the agent's working tree, from Git on its host.
+      parameters: [{ $ref: "#/components/parameters/SessionId" }, { name: revision, in: query, schema: { type: string } }]
+      responses:
+        "200": { description: "`{ repo_name, repo_id, base_commit, head, fingerprint, files: ChangedFile[], stale_request }`" }
+        "422": { $ref: "#/components/responses/Error" }
+        "501": { $ref: "#/components/responses/Error" }
+  /v1/sessions/{id}/changes/{file}:
+    get:
+      summary: One file's hunks at `revision`. 409 `revision_changed` if the tree moved.
+      parameters:
+        - { $ref: "#/components/parameters/SessionId" }
+        - { name: file, in: path, required: true, schema: { type: string } }
+        - { name: revision, in: query, schema: { type: string } }
+      responses:
+        "200": { description: "`{ file: ChangedFile, fingerprint, hunks: Hunk[], redactions }`" }
+        "409": { $ref: "#/components/responses/Error" }
+  /v1/sessions/{id}/files:
+    get:
+      summary: Directory listing inside the agent's repository; sensitive paths are flagged `withheld`.
+      parameters: [{ $ref: "#/components/parameters/SessionId" }, { name: path, in: query, schema: { type: string } }]
+      responses: { "200": { description: "`{ root, path, entries: { name, path, type, git, withheld }[] }`" } }
+  /v1/approvals/{id}:
+    get:
+      parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+      responses: { "200": { description: "`{ approval: Approval }`" } }
+  /v1/actions/{id}:
+    get:
+      summary: A receipt by action id (this device's only).
+      parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+      responses: { "200": { $ref: "#/components/responses/Receipt" }, "404": { $ref: "#/components/responses/Error" } }
+  /v1/actions:
+    get:
+      summary: A receipt by Idempotency-Key. How a client settles a lost acknowledgement.
+      parameters: [{ name: idempotency_key, in: query, required: true, schema: { type: string } }]
+      responses: { "200": { $ref: "#/components/responses/Receipt" }, "404": { $ref: "#/components/responses/Error" } }
+  /v1/intents/resolve:
+    post:
+      summary: Resolve an utterance to a destination. Read-only; never dispatches.
+      requestBody:
+        content: { application/json: { schema: { type: object, properties: { text: { type: string }, focus_session_id: { type: [string, "null"] } } } } }
+      responses: { "200": { description: "`{ status: resolved|ambiguous|no_match|not_an_operation, intent, candidates, reason, parsed }`" } }
+  /v1/sessions/{id}/messages:
+    post:
+      summary: Type a message into the agent's session (scope act).
+      parameters: [{ $ref: "#/components/parameters/SessionId" }, { $ref: "#/components/parameters/IdempotencyKey" }]
+      requestBody:
+        content: { application/json: { schema: { type: object, required: [text], properties: { text: { type: string, maxLength: 8000 }, expected_generation: { type: integer } } } } }
+      responses: { "200": { $ref: "#/components/responses/Receipt" }, "400": { $ref: "#/components/responses/Error" } }
+  /v1/sessions/{id}/attachments:
+    post:
+      summary: Show the agent a photo (scope act). The JPEG is saved on the agent's machine and the agent is sent a message naming its path.
+      description: |
+        Saved under `<cwd>/.herdr-attachments/` (a folder that ignores itself in Git), or the host's temp
+        dir when Herdr reports no cwd. The receipt's `result` carries `{ path, bytes }`. A retry with the
+        same Idempotency-Key and photo returns the first receipt and saves nothing new.
+      parameters:
+        - { $ref: "#/components/parameters/SessionId" }
+        - { $ref: "#/components/parameters/IdempotencyKey" }
+        - { name: note, in: query, schema: { type: string, maxLength: 8000 }, description: What you said about the photo; sent after the path. }
+        - { name: expected_generation, in: query, schema: { type: integer } }
+      requestBody:
+        required: true
+        content: { image/jpeg: { schema: { type: string, format: binary, maxLength: 5242880 } } }
+      responses:
+        "200": { $ref: "#/components/responses/Receipt" }
+        "413": { $ref: "#/components/responses/Error" }
+        "415": { $ref: "#/components/responses/Error" }
+  /v1/tasks/delegate:
+    post:
+      summary: Dispatch a reviewed instruction to a resolved session (scope act). Result carries `task_id`.
+      parameters: [{ $ref: "#/components/parameters/IdempotencyKey" }]
+      requestBody:
+        content: { application/json: { schema: { type: object, required: [session_id, instruction], properties: { session_id: { type: string }, instruction: { type: string }, expected_generation: { type: integer } } } } }
+      responses: { "200": { $ref: "#/components/responses/Receipt" } }
+  /v1/sessions/{id}/actions/explain:
+    post:
+      summary: Send selected terminal text (redacted, ≤4000 chars) to the agent with explicit consent.
+      parameters: [{ $ref: "#/components/parameters/SessionId" }, { $ref: "#/components/parameters/IdempotencyKey" }]
+      requestBody:
+        content: { application/json: { schema: { type: object, required: [text, consent], properties: { text: { type: string }, consent: { const: true }, expected_generation: { type: integer } } } } }
+      responses: { "200": { $ref: "#/components/responses/Receipt" } }
+  /v1/sessions/{id}/actions/stop:
+    post:
+      summary: Interrupt the agent (sends Esc).
+      parameters: [{ $ref: "#/components/parameters/SessionId" }, { $ref: "#/components/parameters/IdempotencyKey" }]
+      requestBody:
+        content: { application/json: { schema: { type: object, properties: { expected_generation: { type: integer } } } } }
+      responses: { "200": { $ref: "#/components/responses/Receipt" } }
+  /v1/sessions/{id}/actions/keys:
+    post:
+      summary: Press keys in the agent's pane from the interactive terminal. Only esc, tab, enter, up, down, left, right, backspace and ctrl+c are accepted.
+      parameters: [{ $ref: "#/components/parameters/SessionId" }, { $ref: "#/components/parameters/IdempotencyKey" }]
+      requestBody:
+        content: { application/json: { schema: { type: object, required: [keys], properties: { keys: { type: array, minItems: 1, maxItems: 8, items: { type: string, enum: [esc, tab, enter, up, down, left, right, backspace, "ctrl+c"] } }, expected_generation: { type: integer } } } } }
+      responses: { "200": { $ref: "#/components/responses/Receipt" } }
+  /v1/sessions/{id}/actions/respond:
+    post:
+      summary: Answer the session's open approval; same rules as `/v1/approvals/{id}/decision`.
+      parameters: [{ $ref: "#/components/parameters/SessionId" }, { $ref: "#/components/parameters/IdempotencyKey" }]
+      requestBody:
+        content: { application/json: { schema: { type: object, required: [option_index, evidence_fingerprint], properties: { approval_id: { type: string }, option_index: { type: integer }, evidence_fingerprint: { type: string }, expected_generation: { type: integer } } } } }
+      responses: { "200": { $ref: "#/components/responses/Receipt" }, "409": { $ref: "#/components/responses/Error" } }
+  /v1/approvals/{id}/decision:
+    post:
+      summary: Choose an option. Sent only if the live screen still shows the same question (fingerprint) in the same generation.
+      parameters: [{ name: id, in: path, required: true, schema: { type: string } }, { $ref: "#/components/parameters/IdempotencyKey" }]
+      requestBody:
+        content: { application/json: { schema: { type: object, required: [option_index, evidence_fingerprint], properties: { option_index: { type: integer }, evidence_fingerprint: { type: string }, expected_generation: { type: integer } } } } }
+      responses: { "200": { $ref: "#/components/responses/Receipt" } }
+  /v1/sessions/{id}/actions/review:
+    post:
+      summary: Approve or request changes on an exact revision (scope review).
+      description: |
+        `approve` is a Herdr review acknowledgment bound to `revision`; it does not commit, push,
+        merge or approve a pull request. A stale `revision` is rejected with `revision_changed`.
+      parameters: [{ $ref: "#/components/parameters/SessionId" }, { $ref: "#/components/parameters/IdempotencyKey" }]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [revision, decision]
+              properties:
+                revision: { type: string }
+                decision: { type: string, enum: [approve, request_changes] }
+                note: { type: string }
+                file_path: { type: string }
+                hunk_header: { type: string }
+      responses: { "200": { $ref: "#/components/responses/Receipt" } }
+  /v1/devices/{id}/revoke:
+    post:
+      summary: Revoke a device (scope admin; normally done with `herdr-bridge revoke` on the host).
+      parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+      responses: { "200": { description: "`{ revoked: boolean }`" } }

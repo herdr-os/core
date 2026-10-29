@@ -1,0 +1,34 @@
+{
+  "version": "preview-20261029",
+  "built": "2026-10-29T12:39:02.654Z",
+  "files": [
+    {
+      "name": "herdr-os.apk",
+      "url": "/downloads/herdr-os.apk",
+      "sha256": "5b6a0b7df1c5ffaf9058cc30cf0b27b969daa22b6fc42524792b8dfc54bf8298",
+      "bytes": 3416951,
+      "what": "The Herdr OS app for the R1 (preview build)"
+    },
+    {
+      "name": "herdr-os-module.zip",
+      "url": "/downloads/herdr-os-module.zip",
+      "sha256": "2eb86e0edb7d26e09953f1ff55a08a3278c042e0e9cb17bf61f20b807d35d560",
+      "bytes": 256529,
+      "what": "Magisk module: wheel and button mapping, power defaults, no Android lock screen, Herdr boot animation"
+    },
+    {
+      "name": "Magisk-v30.7.apk",
+      "url": "/downloads/Magisk-v30.7.apk",
+      "sha256": "e0d32d2123532860f97123d927b1bb86c4e08e6fd8a48bfc6b5bee0afae9ebd5",
+      "bytes": 11613864,
+      "what": "Magisk, to root the R1 (GPLv3, github.com/topjohnwu/Magisk)"
+    },
+    {
+      "name": "herdr-bridge.tar.gz",
+      "url": "/downloads/herdr-bridge.tar.gz",
+      "sha256": "37ea7b31badafcf1ea00a09f30f334a357df85dab518d2eb9aeb2b02c602d22b",
+      "bytes": 62296,
+      "what": "The bridge for your computer (Node 25, no dependencies)"
+    }
+  ]
+}

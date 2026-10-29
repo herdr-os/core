@@ -1,0 +1,70 @@
+(
+    <div style={{ backgroundColor: '#000000', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', fontSize: '12px', fontSynthesis: 'none', gap: '12px', height: '640px', lineHeight: '16px', MozOsxFontSmoothing: 'grayscale', overflow: 'clip', overflowWrap: 'anywhere', paddingBottom: '20px', paddingInline: '22px', paddingTop: '22px', WebkitFontSmoothing: 'antialiased', width: '480px' }}>
+      <div style={{ alignItems: 'center', boxSizing: 'border-box', display: 'flex', gap: '12px', width: '100%' }}>
+        <div style={{ alignItems: 'center', backgroundColor: '#1C1C1C', borderRadius: '50%', boxSizing: 'border-box', display: 'flex', flexShrink: '0', height: '64px', justifyContent: 'center', width: '64px' }}>
+          <svg width="22" height="22" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style={{ display: 'inline-block', flexShrink: '0' }}>
+            <path d="M15 5l-7 7 7 7" fill="none" stroke="#F4EFE6" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </div>
+        <div style={{ boxSizing: 'border-box', display: 'flex', flexDirection: 'column', flexGrow: '1', gap: '2px' }}>
+          <div style={{ boxSizing: 'border-box', color: '#F4EFE6', fontFamily: '"Space Grotesk", system-ui, sans-serif', fontSize: '22px', fontWeight: 700, lineHeight: '28px' }}>
+            <span style={{ lineHeight: '28px' }}>Claude Code</span>
+          </div>
+          <div style={{ boxSizing: 'border-box', color: '#8C8880', fontFamily: '"JetBrains Mono", system-ui, sans-serif', fontSize: '13px', letterSpacing: '0.08em', lineHeight: '16px' }}>
+            OPUS 5.5 · CEREBRO · ~/herdr-os
+          </div>
+        </div>
+        <div style={{ backgroundImage: 'url(https://app.paper.design/file-assets/01M625BYBEZ8W0D3H83MGGXJ3T/7Y5NC9Y4M1ZG9SD19GTY57JD3B.svg)', backgroundPosition: '50%', backgroundRepeat: 'no-repeat', backgroundSize: '100% 100%', boxSizing: 'border-box', flexShrink: '0', height: '26px', width: '26px' }} />
+      </div>
+      <div style={{ alignItems: 'end', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', flexGrow: '1', gap: '8px', justifyContent: 'end', width: '100%' }}>
+        <div style={{ backgroundColor: '#1A1A1A', borderBottomLeftRadius: '6px', borderBottomRightRadius: '18px', borderTopLeftRadius: '18px', borderTopRightRadius: '18px', boxSizing: 'border-box', paddingBlock: '10px', paddingInline: '14px' }}>
+          <div style={{ boxSizing: 'border-box', color: '#6E6A63', fontFamily: '"Space Grotesk", system-ui, sans-serif', fontSize: '16px', lineHeight: '20px' }}>
+            Switched the terminal to Ghostty.
+          </div>
+        </div>
+        <div style={{ backgroundColor: '#1A1A1A', borderBottomLeftRadius: '6px', borderBottomRightRadius: '18px', borderTopLeftRadius: '18px', borderTopRightRadius: '18px', boxSizing: 'border-box', paddingBlock: '10px', paddingInline: '14px' }}>
+          <div style={{ boxSizing: 'border-box', color: '#8C8880', fontFamily: '"Space Grotesk", system-ui, sans-serif', fontSize: '16px', lineHeight: '20px' }}>
+            All 417 tests passed. ✓
+          </div>
+        </div>
+      </div>
+      <div style={{ alignItems: 'end', boxSizing: 'border-box', display: 'flex', gap: '4px', width: '100%' }}>
+        <div style={{ backgroundImage: 'url(https://app.paper.design/file-assets/01M625BYBEZ8W0D3H83MGGXJ3T/39HH5MCD9RTZ982923VS6V0BVA.svg)', backgroundPosition: '50%', backgroundRepeat: 'no-repeat', backgroundSize: '100% 100%', boxSizing: 'border-box', flexShrink: '0', height: '128px', marginLeft: '-6px', width: '128px' }} />
+        <div style={{ backgroundColor: '#D97757', borderBottomLeftRadius: '6px', borderBottomRightRadius: '26px', borderTopLeftRadius: '26px', borderTopRightRadius: '26px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', flexGrow: '1', gap: '10px', marginBottom: '64px', paddingBlock: '18px', paddingInline: '20px' }}>
+          <div style={{ boxSizing: 'border-box', color: '#141413', fontFamily: '"Space Grotesk", system-ui, sans-serif', fontSize: '22px', fontWeight: 700, lineHeight: '28px' }}>
+            Can I install the new build on the R1?
+          </div>
+          <div style={{ boxSizing: 'border-box', color: '#141413', fontFamily: '"JetBrains Mono", system-ui, sans-serif', fontSize: '14px', lineHeight: '17px' }}>
+            $ adb install -r app-release.apk
+          </div>
+        </div>
+      </div>
+      <div style={{ boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
+        <div style={{ alignItems: 'center', backgroundColor: '#FF4F12', borderRadius: '999px', boxSizing: 'border-box', display: 'flex', flexShrink: '0', height: '64px', justifyContent: 'center' }}>
+          <div style={{ boxSizing: 'border-box', color: '#0B0B0B', fontFamily: '"Space Grotesk", system-ui, sans-serif', fontSize: '20px', fontWeight: 700, lineHeight: '24px' }}>
+            Yes, once
+          </div>
+        </div>
+        <div style={{ boxSizing: 'border-box', display: 'flex', gap: '10px' }}>
+          <div style={{ alignItems: 'center', backgroundColor: '#1C1C1C', borderRadius: '999px', boxSizing: 'border-box', display: 'flex', flexGrow: '1', height: '56px', justifyContent: 'center' }}>
+            <div style={{ boxSizing: 'border-box', color: '#F4EFE6', fontFamily: '"Space Grotesk", system-ui, sans-serif', fontSize: '18px', fontWeight: 600, lineHeight: '22px' }}>
+              Ask me why
+            </div>
+          </div>
+          <div style={{ alignItems: 'center', backgroundColor: '#1C1C1C', borderRadius: '999px', boxSizing: 'border-box', display: 'flex', flexShrink: '0', height: '56px', justifyContent: 'center', width: '110px' }}>
+            <div style={{ boxSizing: 'border-box', color: '#F4EFE6', fontFamily: '"Space Grotesk", system-ui, sans-serif', fontSize: '18px', fontWeight: 600, lineHeight: '22px' }}>
+              No
+            </div>
+          </div>
+        </div>
+        <div style={{ boxSizing: 'border-box', display: 'flex', justifyContent: 'space-between', paddingInline: '4px', paddingTop: '2px' }}>
+          <div style={{ boxSizing: 'border-box', color: '#8C8880', fontFamily: '"JetBrains Mono", system-ui, sans-serif', fontSize: '14px', letterSpacing: '0.08em', lineHeight: '18px' }}>
+            <span style={{ color: '#FF4F12', fontWeight: 700 }}>HOLD</span> · ANSWER IN YOUR WORDS
+          </div>
+          <div style={{ boxSizing: 'border-box', color: '#8C8880', fontFamily: '"JetBrains Mono", system-ui, sans-serif', fontSize: '14px', letterSpacing: '0.08em', lineHeight: '18px' }}>
+            TOUCH APPROVES
+          </div>
+        </div>
+      </div>
+    </div>
+  )

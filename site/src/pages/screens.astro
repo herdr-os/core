@@ -1,0 +1,12 @@
+---
+import "../styles/global.css";
+import Screen from "../components/Screen.astro";
+const names = Object.keys(import.meta.glob("../screens/*.astro")).map((p) => p.split("/").pop()!.replace(".astro", "")).sort();
+---
+<html lang="en"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><title>Herdr OS screens</title><meta name="robots" content="noindex" /></head>
+<body style="padding:40px">
+  <p class="mono orange" style="margin-bottom:24px">{names.length} screens, live HTML from Paper</p>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:28px">
+    {names.map((n) => <figure><div style="position:relative;aspect-ratio:3/4;border-radius:18px;overflow:hidden;background:#000;box-shadow:0 0 0 1px #ffffff18"><Screen name={n} /></div><figcaption class="mono dim" style="margin-top:10px">{n}</figcaption></figure>)}
+  </div>
+</body></html>

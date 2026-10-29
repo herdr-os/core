@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Black glass, warm white type and the R1's high-vis orange. Orange marks what is live or
+         primary; errors use a distinct rose so they never read as the accent. -->
+    <color name="bg">#000000</color>
+    <!-- Cards, rows and fields. -->
+    <color name="field">#151515</color>
+    <!-- Icon wells, chips and secondary buttons. -->
+    <color name="raised">#242424</color>
+    <color name="outline">#2E2E2E</color>
+    <color name="fg">#F6F4F0</color>
+    <color name="dim">#A3A09A</color>
+    <color name="faint">#6C6A65</color>
+    <color name="accent">#FF4F12</color>
+    <color name="on_accent">#0A0A0A</color>
+    <!-- The host console's orange-soft: the fill inside the robotOS mark. -->
+    <color name="accent_soft">#2B1C15</color>
+    <color name="press">#4DFF4F12</color>
+    <color name="error">#FF5C7A</color>
+    <color name="ok">#4BE38A</color>
+    <!-- Herdr harness brands: who an agent is, never what state it is in. Each has its own ink. -->
+    <color name="herd_claude">#D97757</color>
+    <color name="herd_claude_ink">#141413</color>
+    <color name="herd_codex">#F3F3F1</color>
+    <color name="herd_codex_ink">#0D0D0D</color>
+    <color name="herd_pi">#4D9ABF</color>
+    <color name="herd_pi_ink">#0B1A22</color>
+    <!-- OpenCode's near-black, lifted so its cards and bubbles read on the black screen. -->
+    <color name="herd_opencode">#3A3535</color>
+    <color name="herd_opencode_ink">#F1ECEC</color>
+    <color name="herd_other">#FFB68A</color>
+    <color name="herd_other_ink">#0A0A0A</color>
+    <!-- The companion's speech: warm cream, and the plain next-step button. -->
+    <!-- Wheel focus on the shade: a wash over the tile, never an outline. -->
+    <color name="focus_wash">#26FFFFFF</color>
+    <color name="raised_hi">#2A2826</color>
+    <color name="cream">#F4EFE6</color>
+    <!-- Pasture ground and its grid. -->
+    <color name="field_day">#0C100C</color>
+    <color name="field_line">#1E2A1E</color>
+</resources>

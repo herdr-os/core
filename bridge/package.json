@@ -1,0 +1,37 @@
+{
+  "name": "@herdr-os/bridge",
+  "version": "0.4.0",
+  "description": "The bridge between a Rabbit R1 running Herdr OS and the coding agents Herdr runs on your machines.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "herdr-bridge": "dist/main.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "start": "node src/main.ts serve",
+    "enroll": "node src/main.ts enroll",
+    "fixtures": "node src/main.ts serve --fixtures",
+    "test": "node --test 'tests/**/*.test.ts'",
+    "build": "node --disable-warning=ExperimentalWarning scripts/build.mjs",
+    "prepack": "npm run build"
+  },
+  "keywords": [
+    "herdr",
+    "rabbit-r1",
+    "claude-code",
+    "codex",
+    "coding-agents",
+    "tailscale"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

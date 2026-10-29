@@ -1,0 +1,500 @@
+package dev.r1ptt.hermes
+
+import android.content.Intent
+import android.content.IntentFilter
+import android.os.BatteryManager
+import android.os.Handler
+import android.os.Looper
+import android.media.AudioManager
+import android.provider.Settings
+import android.telephony.SubscriptionManager
+import android.telephony.TelephonyManager
+import android.util.Log
+import dev.r1ptt.App
+import dev.r1ptt.data.Agent
+import dev.r1ptt.data.HermesLink
+import dev.r1ptt.Phase
+import dev.r1ptt.ui.DeviceActivity
+import dev.r1ptt.ui.AppDestination
+import dev.r1ptt.workspace.HubException
+import dev.r1ptt.workspace.WorkspaceActivity
+import dev.r1ptt.messages.SmsDraft
+import dev.r1ptt.messages.SmsRecipientResolver
+import dev.r1ptt.messages.SmsRecipientText
+import dev.r1ptt.messages.SmsRecord
+import dev.r1ptt.messages.SmsResolution
+import dev.r1ptt.messages.SmsStatus
+import dev.r1ptt.messages.SmsStore
+import org.json.JSONArray
+import org.json.JSONObject
+import java.io.BufferedInputStream
+import java.io.ByteArrayOutputStream
+import java.io.InputStream
+import java.net.Inet4Address
+import java.net.Inet6Address
+import java.net.InetAddress
+import java.net.InetSocketAddress
+import java.net.ServerSocket
+import java.net.Socket
+import java.net.URLDecoder
+import java.security.MessageDigest
+import java.time.Instant
+import java.util.UUID
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+
+/**
+ * The R1's side of Hermes's `robotos` MCP server: a small JSON API on the tailnet. Hermes is the
+ * agent; this only carries out what it asks (send a text, report on the device). Only Tailscale and
+ * loopback (adb) peers presenting the bearer token are served, one request per connection.
+ */
+class DeviceApi(
+    private val app: App,
+    private val sms: dev.r1ptt.messages.SmsController = app.sms,
+    private val clock: () -> Long = System::currentTimeMillis,
+    private val settleMs: Long = 12_000L,
+    private val speak: ((String) -> Boolean)? = null,
+) {
+    private val main = Handler(Looper.getMainLooper())
+    private val pool = Executors.newFixedThreadPool(3) { r -> Thread(r, "device-api").apply { isDaemon = true } }
+    private val receipts = DeviceReceipts(app, clock)
+    private val sendLock = Any()
+    private var server: ServerSocket? = null
+    private var port = 0
+    /** When Hermes last reached the R1 (for the settings screen). */
+    @Volatile var lastCall = 0L
+        private set
+    val listening: Boolean get() = server?.isClosed == false
+
+    /** Follows the config: serve while enabled and valid, otherwise close the port. */
+    @Synchronized fun apply(link: HermesLink) {
+        val want = app.workspace.networkAllowed && link.deviceApi && link.valid()
+        if (want && server?.isClosed == false && port == link.port) return
+        stop()
+        if (!want) return
+        try {
+            val socket = ServerSocket().apply { reuseAddress = true; bind(InetSocketAddress(link.port), 16) }
+            server = socket
+            port = link.port
+            Thread({ accept(socket) }, "device-api-accept").apply { isDaemon = true }.start()
+            Log.i(TAG, "device api: listening")
+        } catch (e: Exception) {
+            Log.w(TAG, "device api: ${e.javaClass.simpleName}")
+        }
+    }
+
+    @Synchronized fun stop() {
+        runCatching { server?.close() }
+        server = null
+    }
+
+    private fun accept(socket: ServerSocket) {
+        while (!socket.isClosed) {
+            val client = try { socket.accept() } catch (_: Exception) { break }
+            pool.execute { serve(client) }
+        }
+    }
+
+    private fun serve(socket: Socket) = socket.use {
+        runCatching {
+            socket.soTimeout = 15_000
+            if (!allowed(socket.inetAddress)) return@use
+            val request = Request.read(BufferedInputStream(socket.getInputStream()))
+            val (code, body) = if (request == null) 400 to error("Bad request") else handle(request)
+            respond(socket, code, body)
+        }.onFailure { Log.w(TAG, "device api: ${it.javaClass.simpleName}") }
+    }
+
+    internal fun handle(request: Request): Pair<Int, JSONObject> {
+        val link = app.store.value.hermes
+        if (!link.deviceApi || !authorized(request.headers["authorization"], link.token)) return 401 to error("Unauthorized")
+        if (!app.workspace.networkAllowed) return 403 to error("Workspace access is restricted on this R1")
+        lastCall = clock()
+        var requestId: String? = null
+        return try {
+            when {
+                request.method == "GET" && request.path == "/v1/status" -> 200 to status()
+                request.method == "POST" && request.path in MUTATIONS -> {
+                    val body = JSONObject(request.body)
+                    val id = body.optString("request_id").ifBlank { UUID.randomUUID().toString() }
+                    requestId = id
+                    body.put("request_id", id)
+                    // Capture the authenticated identity; recheck it at the actual execution boundary.
+                    receipts.perform(id, link.token, request.path + "\n" + body.toString()) {
+                        if (!permitted(link.token, request.path)) 403 to error(if (request.path == "/v1/name") NAMED else "This device action is disabled.")
+                        else when (request.path) {
+                            "/v1/sms" -> send(body, link.token)
+                            "/v1/recipients" -> saveRecipient(body, link.token)
+                            "/v1/name" -> rename(body, link.token)
+                            "/v1/apps/open" -> openApp(body, link.token)
+                            else -> control(request.path, body, link.token)
+                        }
+                    }
+                }
+                request.method == "GET" && request.path.startsWith("/v1/requests/") ->
+                    receipts.get(request.path.removePrefix("/v1/requests/"), link.token)
+                        ?: (404 to error("No receipt with that request_id. This is not proof the action did not run; receipts are retained for seven days."))
+                request.method == "GET" && request.path.startsWith("/v1/sms/") -> sms(request.path.removePrefix("/v1/sms/"))
+                request.method == "GET" && request.path == "/v1/texts" ->
+                    texts(request.query["with"], (request.query["limit"]?.toIntOrNull() ?: 20).coerceIn(1, 100))
+                request.method == "GET" && request.path == "/v1/recipients" -> 200 to JSONObject().put("recipients",
+                    JSONArray(sms.savedRecipients().map { JSONObject().put("name", it.name).put("number", it.number) }))
+                else -> 404 to error("Not found")
+            }
+        } catch (e: org.json.JSONException) {
+            400 to error("Invalid JSON")
+        } catch (e: IllegalArgumentException) {
+            400 to error(e.message ?: "Invalid request")
+        } catch (e: DeviceReceiptReadException) {
+            503 to error(e.message.orEmpty()).put("status", "blocked").put("request_id", requestId ?: JSONObject.NULL)
+        } catch (e: Exception) {
+            Log.w(TAG, "device action: ${e.javaClass.simpleName}")
+            503 to error("The action outcome is unknown. Check the request receipt before trying again.")
+                .put("status", "unknown").put("request_id", requestId ?: JSONObject.NULL)
+        }
+    }
+
+    private fun permitted(token: String, path: String): Boolean {
+        val link = app.store.value.hermes
+        if (!link.deviceApi || link.token != token || !app.workspace.networkAllowed) return false
+        return when (path) {
+            "/v1/speak" -> link.allowSpeak
+            "/v1/show" -> link.allowShow
+            "/v1/volume" -> link.allowVolume
+            "/v1/recipients" -> link.allowSaveRecipient
+            "/v1/apps/open" -> link.allowOpenApps
+            "/v1/sms" -> true // Existing enabled SMS access is preserved.
+            "/v1/name" -> app.store.value.agent.name.isBlank() // once: only while the user hasn't named it
+            else -> false
+        }
+    }
+
+    private fun control(path: String, body: JSONObject, token: String): Pair<Int, JSONObject> {
+        val text = body.optString("text").trim()
+        if (path in setOf("/v1/speak", "/v1/show"))
+            require(text.isNotEmpty() && text.length <= 2000) { "text must be 1–2000 characters." }
+        val level = if (path == "/v1/volume") body.getDouble("level").also {
+            require(it.isFinite() && it in 0.0..1.0) { "level must be between 0 and 1." }
+        } else 0.0
+        return onMain {
+            if (!permitted(token, path)) return@onMain 403 to error("This device action is disabled.")
+            when (path) {
+                "/v1/speak" -> when {
+                    app.store.value.quiet -> 409 to error("Quiet mode is on. Nothing was spoken.")
+                    !(speak?.invoke(text) ?: app.turns.speakText(text) { permitted(token, path) }) ->
+                        409 to error("The microphone or speech output is busy. Nothing was spoken.")
+                    else -> 200 to JSONObject().put("status", "speaking")
+                }
+                "/v1/show" -> 200 to JSONObject().put("status", "shown").put("id", app.notices.add(text).id)
+                else -> {
+                    val audio = app.getSystemService(AudioManager::class.java)
+                    val max = audio.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+                    audio.setStreamVolume(AudioManager.STREAM_MUSIC, kotlin.math.round(level * max).toInt(), 0)
+                    200 to JSONObject().put("status", "applied").put("level",
+                        if (max > 0) audio.getStreamVolume(AudioManager.STREAM_MUSIC).toDouble() / max else 0.0)
+                }
+            }
+        }
+    }
+
+    private fun openApp(body: JSONObject, token: String): Pair<Int, JSONObject> {
+        val destination = body.opt("app")
+        require(destination is String && destination in AppDestination.names) { "Choose a supported robotOS app." }
+        val collection = AppDestination.collection(destination)
+        val itemId = if (body.has("item_id")) {
+            val value = body.opt("item_id")
+            require(collection != null && value is String && value.matches(Regex("[A-Za-z0-9_-]{1,200}"))) {
+                "item_id must be an exact saved note or prompt ID, and is only supported for notes or prompt_builder."
+            }
+            value
+        } else null
+        val hub = app.workspace
+        if (itemId != null && hub.store.item(collection!!, itemId) == null && hub.identity.paired) {
+            // Command delivery can precede the ordinary workspace sync. Fetch only the requested item;
+            // calling sync() here would wait on the same lock that is delivering this command.
+            val item = try { hub.api("GET", "/$collection/$itemId") }
+            catch (e: HubException) {
+                return (if (e.status == 404) 404 else 503) to error(if (e.status == 404) "That saved item does not exist." else "The saved item could not be loaded. Nothing was opened.")
+            }
+            catch (_: Exception) { return 503 to error("The saved item could not be loaded. Nothing was opened.") }
+            if (!permitted(token, "/v1/apps/open")) return 403 to error("Opening apps is disabled.")
+            if (hub.store.item(collection, itemId) == null) hub.store.put(collection, item)
+        }
+        return onMain {
+            if (!permitted(token, "/v1/apps/open")) return@onMain 403 to error("Opening apps is disabled.")
+            val activity = DeviceActivity.foregroundActivity()
+            if (activity == null || !app.screen.isScreenOn() || app.getSystemService(android.app.KeyguardManager::class.java).isKeyguardLocked)
+                return@onMain 409 to error("Wake and unlock the R1 with robotOS in the foreground to open an app.")
+            if (activity.hasOpenDialog || app.turns.reviewingApproval ||
+                app.turns.state.value.phase in setOf(Phase.LISTENING, Phase.DICTATING, Phase.TRANSCRIBING) ||
+                (activity is WorkspaceActivity && !activity.canNavigateFromTools()))
+                return@onMain 409 to error("Finish the current recording, edit or review before opening an app.")
+            if (itemId != null && hub.store.item(collection!!, itemId) == null)
+                return@onMain 404 to error("That item is not saved on this R1. Nothing was opened.")
+            val status = if (activity is WorkspaceActivity && destination in setOf("workspace", "notes", "prompt_builder")) {
+                activity.openApp(destination, itemId)
+                "opened"
+            } else {
+                activity.startActivity(AppDestination.intent(activity, destination, itemId, token))
+                "opening" // Android accepted the launch; this is not a claim that it is visible yet.
+            }
+            200 to JSONObject().put("status", status).put("app", destination).put("item_id", itemId ?: JSONObject.NULL)
+        }
+    }
+
+    private fun saveRecipient(body: JSONObject, token: String): Pair<Int, JSONObject> {
+        val name = body.optString("name").trim()
+        val number = SmsRecipientText.number(body.optString("number"), SmsRecipientText.region(app))
+        require(name.isNotEmpty() && name.length <= 80 && number != null) { "Provide a name of 1–80 characters and one valid phone number." }
+        if (!permitted(token, "/v1/recipients")) return 403 to error("Saving recipients is disabled.")
+        SmsStore(app).use { db ->
+            if (db.recipients().none { it.name == name && it.number == number }) db.addRecipient(name, number)
+        }
+        return 200 to JSONObject().put("status", "saved").put("name", name).put("number", number)
+    }
+
+    /**
+     * Hermes tells the R1 what the user calls it, usually once during setup. It works only while the
+     * name is empty, checked atomically with the save, so after that only the user can change it.
+     */
+    private fun rename(body: JSONObject, token: String): Pair<Int, JSONObject> {
+        val name = requireNotNull(Agent.cleanName(body.optString("name"))) {
+            "name must be 1–${Agent.NAME_MAX} letters or digits, with spaces, apostrophes, hyphens or periods."
+        }
+        var named = false
+        app.store.update { c ->
+            if (c.hermes.deviceApi && c.hermes.token == token && c.agent.name.isBlank()) c.copy(agent = c.agent.copy(name = name)).also { named = true }
+            else c
+        }
+        return if (named) 200 to JSONObject().put("status", "named").put("name", name) else 403 to error(NAMED)
+    }
+
+    /** A timed-out queued action cannot execute later without its caller knowing. */
+    private fun onMain(action: () -> Pair<Int, JSONObject>): Pair<Int, JSONObject> {
+        val latch = CountDownLatch(1)
+        val admitted = AtomicBoolean(false)
+        var result = 202 to error("The action outcome is unknown. Check its receipt; do not repeat it.").put("status", "unknown")
+        main.post {
+            if (!admitted.compareAndSet(false, true)) return@post
+            try { result = action() }
+            catch (_: Exception) { result = 503 to error("The action outcome is unknown.").put("status", "unknown") }
+            finally { latch.countDown() }
+        }
+        if (!latch.await(10, TimeUnit.SECONDS) && admitted.compareAndSet(false, true))
+            return 503 to error("The device was busy. No action was started.")
+        return result
+    }
+
+    private fun status(): JSONObject {
+        val battery = app.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+        val level = battery?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) ?: -1
+        val scale = battery?.getIntExtra(BatteryManager.EXTRA_SCALE, 100) ?: 100
+        val sub = SubscriptionManager.getDefaultSmsSubscriptionId()
+        val validSim = SubscriptionManager.isValidSubscriptionId(sub)
+        val carrier = runCatching {
+            app.getSystemService(TelephonyManager::class.java).createForSubscriptionId(sub).networkOperatorName
+        }.getOrNull().orEmpty()
+        val link = app.store.value.hermes
+        val name = app.store.value.agent.name
+        return JSONObject()
+            .put("device", "Rabbit R1 running robotOS")
+            .put("name", name.ifBlank { null } ?: JSONObject.NULL)
+            .put("name_settable", name.isBlank())
+            .put("app_version", runCatching { app.packageManager.getPackageInfo(app.packageName, 0).versionName }.getOrNull())
+            .put("battery_percent", if (scale > 0 && level >= 0) level * 100 / scale else JSONObject.NULL)
+            .put("charging", (battery?.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) ?: 0) != 0)
+            .put("online", app.radio.isOnline())
+            .put("airplane_mode", Settings.Global.getInt(app.contentResolver, Settings.Global.AIRPLANE_MODE_ON, 0) != 0)
+            .put("screen_on", app.screen.isScreenOn())
+            .put("can_text", sms.canSend && app.store.value.power.cellular && validSim)
+            .put("carrier", carrier)
+            .put("texts_sent_today", sentToday())
+            .put("daily_text_limit", link.dailySendLimit)
+            .put("owner_texts_go_to_hermes", link.passthrough)
+            .put("permissions", JSONObject().put("speak", link.allowSpeak).put("show", link.allowShow)
+                .put("set_volume", link.allowVolume).put("save_recipient", link.allowSaveRecipient).put("open_app", link.allowOpenApps))
+            .put("request_receipt_retention_seconds", DeviceReceipts.RETENTION_MS / 1000)
+            .put("open_app_targets", JSONArray(AppDestination.names))
+    }
+
+    /** One text, sent now. Serialized so parallel tool calls cannot collide in the native executor. */
+    private fun send(j: JSONObject, token: String): Pair<Int, JSONObject> {
+        val to = j.optString("to").trim()
+        val body = j.optString("body").trim()
+        require(to.isNotEmpty() && to.length <= 80) { "`to` must be a phone number or a recipient name saved on the R1." }
+        require(body.isNotEmpty() && body.length <= SmsRecord.MAX_DRAFT_CHARS) { "`body` must be 1–${SmsRecord.MAX_DRAFT_CHARS} characters." }
+        synchronized(sendLock) {
+            val limit = app.store.value.hermes.dailySendLimit
+            if (limit > 0 && sentToday() >= limit) return 429 to error("The R1's daily limit of $limit texts from Hermes is reached. Nothing was sent.")
+            val number = when (val r = SmsRecipientResolver.resolve(to, sms.savedRecipients(), SmsRecipientText.region(app))) {
+                is SmsResolution.Number -> r.number
+                is SmsResolution.Choose -> return 409 to error("More than one saved recipient is named \"$to\". Nothing was sent; use a phone number.")
+                    .put("matches", JSONArray(r.matches.map { JSONObject().put("name", it.name).put("number", it.number) }))
+                SmsResolution.Missing -> return 404 to error("No recipient named \"$to\" is saved on the R1. Nothing was sent; use a phone number.")
+            }
+            var attempt = dispatch(number, body, token)
+            // Another send (e.g. the owner's own) may still be handing off; wait briefly, never re-send.
+            repeat(8) { if (!attempt.consumed && attempt.busy) { Thread.sleep(750); attempt = dispatch(number, body, token) } }
+            if (!attempt.consumed) return 409 to error(attempt.message)
+            if (attempt.unknown) return 202 to error("The SMS handoff outcome is unknown. Do not resend; check sms_status if an id is available.")
+                .put("status", "unknown").put("id", attempt.id ?: JSONObject.NULL)
+            Log.i(TAG, "device api: text handed to Android")
+            val id = attempt.id ?: return 202 to error("The SMS handoff outcome is unknown. Do not resend.").put("status", "unknown")
+            return 200 to (settle(id)?.let(::describe) ?: JSONObject().put("id", id).put("to", number).put("status", "sending"))
+        }
+    }
+
+    private class Attempt(val consumed: Boolean, val message: String, val id: String?, val busy: Boolean, val unknown: Boolean = false)
+
+    private fun dispatch(number: String, body: String, token: String): Attempt {
+        val latch = CountDownLatch(1)
+        var result = Attempt(false, "SMS is unavailable.", null, false)
+        val admitted = AtomicBoolean(false)
+        val recordId = AtomicReference<String?>(null)
+        main.post {
+            if (!admitted.compareAndSet(false, true)) return@post
+            if (!permitted(token, "/v1/sms")) {
+                result = Attempt(false, "Device access changed. Nothing was sent.", null, false)
+                latch.countDown(); return@post
+            }
+            val review = try { sms.prepare(SmsDraft(number, body)) } catch (e: Exception) {
+                result = Attempt(false, e.message ?: "SMS is unavailable.", null, false)
+                latch.countDown()
+                return@post
+            }
+            recordId.set(review.record.id)
+            sms.send(review, clearDraft = false, agent = true, authorize = { permitted(token, "/v1/sms") }) { consumed, message ->
+                result = Attempt(consumed, message, review.record.id, !consumed && message.startsWith("Finish the current action"))
+                latch.countDown()
+            }
+        }
+        if (latch.await(30, TimeUnit.SECONDS)) return result
+        return if (admitted.compareAndSet(false, true)) Attempt(false, "The R1 was busy. Nothing was sent.", null, false)
+        else Attempt(true, "The SMS handoff outcome is unknown. Do not resend.", recordId.get(), false, unknown = true)
+    }
+
+    /** Android usually reports a send within a few seconds; report what is known by then. */
+    private fun settle(id: String): SmsRecord? {
+        val until = clock() + settleMs
+        var record = sms.record(id)
+        while (record != null && record.status(clock()) == SmsStatus.SENDING && clock() < until) {
+            Thread.sleep(250)
+            record = sms.record(id)
+        }
+        return record
+    }
+
+    private fun sms(id: String): Pair<Int, JSONObject> {
+        require(id.matches(Regex("[0-9a-f-]{36}"))) { "Unknown text id." }
+        val record = sms.record(id)?.takeIf { !it.incoming } ?: return 404 to error("No text with that id.")
+        return 200 to describe(record)
+    }
+
+    private fun texts(with: String?, limit: Int): Pair<Int, JSONObject> {
+        val saved = sms.savedRecipients()
+        fun name(number: String) = saved.firstOrNull { it.number == number }?.name
+        if (with.isNullOrBlank()) {
+            return 200 to JSONObject().put("conversations", JSONArray(sms.threads().take(limit).map { t ->
+                JSONObject().put("with", t.peer).put("name", name(t.peer) ?: JSONObject.NULL).put("unread", t.unread)
+                    .put("last", message(t.last))
+            }))
+        }
+        val number = (SmsRecipientResolver.resolve(with, saved, SmsRecipientText.region(app)) as? SmsResolution.Number)?.number
+            ?: return 404 to error("No conversation found for \"$with\".")
+        return 200 to JSONObject().put("with", number).put("name", name(number) ?: JSONObject.NULL)
+            .put("messages", JSONArray(sms.conversation(number).takeLast(limit).map(::message)))
+    }
+
+    private fun message(r: SmsRecord) = JSONObject().put("id", r.id).put("direction", if (r.incoming) "in" else "out")
+        .put("at", Instant.ofEpochMilli(r.createdAt).toString()).put("body", r.body)
+        .put("status", if (r.incoming) "received" else r.status(clock()).name.lowercase())
+
+    private fun describe(r: SmsRecord) = JSONObject().put("id", r.id).put("to", r.peer).put("parts", r.parts.size)
+        .put("status", r.status(clock()).name.lowercase())
+        .put("error_codes", JSONArray(r.parts.mapNotNull { it.error }))
+
+    fun sentToday(): Int = app.hermesQuota.sentToday()
+
+    private fun respond(socket: Socket, code: Int, body: JSONObject) {
+        val bytes = body.toString().toByteArray(Charsets.UTF_8)
+        val reason = mapOf(200 to "OK", 202 to "Accepted", 400 to "Bad Request", 401 to "Unauthorized", 403 to "Forbidden", 404 to "Not Found", 409 to "Conflict", 429 to "Too Many Requests", 503 to "Service Unavailable")[code] ?: "Error"
+        socket.getOutputStream().apply {
+            write("HTTP/1.1 $code $reason\r\nContent-Type: application/json; charset=utf-8\r\nContent-Length: ${bytes.size}\r\nConnection: close\r\n\r\n"
+                .toByteArray(Charsets.ISO_8859_1))
+            write(bytes)
+            flush()
+        }
+    }
+
+    /** One parsed HTTP/1.1 request: bounded head and body, no chunked encoding. */
+    class Request(val method: String, val path: String, val query: Map<String, String>, val headers: Map<String, String>, val body: String) {
+        companion object {
+            fun read(input: InputStream): Request? {
+                val head = ByteArrayOutputStream()
+                var state = 0 // progress through "\r\n\r\n"
+                while (state < 4) {
+                    val b = input.read()
+                    if (b < 0 || head.size() >= MAX_HEAD) return null
+                    head.write(b)
+                    state = when (b) {
+                        '\r'.code -> if (state == 2) 3 else 1
+                        '\n'.code -> if (state == 1) 2 else if (state == 3) 4 else 0
+                        else -> 0
+                    }
+                }
+                val lines = head.toString(Charsets.ISO_8859_1.name()).split("\r\n")
+                val start = lines.first().split(" ")
+                if (start.size != 3 || !start[2].startsWith("HTTP/1.")) return null
+                val headers = lines.drop(1).filter { it.isNotEmpty() }.mapNotNull { line ->
+                    line.indexOf(':').takeIf { it > 0 }?.let { line.substring(0, it).trim().lowercase() to line.substring(it + 1).trim() }
+                }.toMap()
+                if (headers.containsKey("transfer-encoding")) return null
+                val length = headers["content-length"]?.toIntOrNull() ?: 0
+                if (length !in 0..MAX_BODY) return null
+                val body = ByteArray(length)
+                var read = 0
+                while (read < length) {
+                    val n = input.read(body, read, length - read)
+                    if (n < 0) return null
+                    read += n
+                }
+                val target = start[1]
+                val q = target.indexOf('?')
+                val query = if (q < 0) emptyMap() else target.substring(q + 1).split('&').mapNotNull { pair ->
+                    val kv = pair.split('=', limit = 2)
+                    if (kv[0].isEmpty()) null else URLDecoder.decode(kv[0], "UTF-8") to URLDecoder.decode(kv.getOrElse(1) { "" }, "UTF-8")
+                }.toMap()
+                return Request(start[0], if (q < 0) target else target.substring(0, q), query, headers, String(body, Charsets.UTF_8))
+            }
+        }
+    }
+
+    companion object {
+        private const val TAG = "r1ptt"
+        private const val MAX_HEAD = 8 * 1024
+        private const val MAX_BODY = 64 * 1024
+        private val MUTATIONS = setOf("/v1/sms", "/v1/speak", "/v1/show", "/v1/volume", "/v1/recipients", "/v1/name", "/v1/apps/open")
+        private const val NAMED = "The R1 already has a name for you. Only the user can change it, in robotOS under Hermes."
+
+        private fun error(message: String) = JSONObject().put("error", message)
+
+        fun authorized(header: String?, token: String): Boolean {
+            if (token.length < 32 || header == null || !header.startsWith("Bearer ")) return false
+            return MessageDigest.isEqual(header.removePrefix("Bearer ").trim().toByteArray(), token.toByteArray())
+        }
+
+        /** Tailscale peers (100.64.0.0/10, fd7a:115c:a1e0::/48) and loopback only; never the Wi-Fi LAN. */
+        fun allowed(address: InetAddress): Boolean {
+            if (address.isLoopbackAddress) return true
+            val b = address.address
+            return when (address) {
+                is Inet4Address -> (b[0].toInt() and 0xff) == 100 && (b[1].toInt() and 0xc0) == 64
+                is Inet6Address -> listOf(0xfd, 0x7a, 0x11, 0x5c, 0xa1, 0xe0).withIndex().all { (i, v) -> (b[i].toInt() and 0xff) == v }
+                else -> false
+            }
+        }
+    }
+}
