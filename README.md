@@ -1,5 +1,7 @@
 # Herdr OS: your coding agents, a herd in your hand
 
+**Website and installer: [herdr-os.org](https://herdr-os.org)**
+
 Herdr OS turns a Rabbit R1 into a pocket companion for the coding agents [Herdr](https://herdr.dev)
 runs on your machines: Claude Code, Codex, Pi and OpenCode. The agents keep running on your
 computers. On the R1 each one is a sheep in its harness's colors on a pasture that follows the
@@ -17,7 +19,7 @@ Rendered by the app's Robolectric tests against the bridge's demo herd, not capt
 
 ## Install
 
-- **The R1:** <https://herdr-os-website.vercel.app/install> walks a stock R1 to Herdr OS from
+- **The R1:** <https://herdr-os.org/install> walks a stock R1 to Herdr OS from
   Chrome over USB (unlock, LineageOS, Magisk root, Herdr OS), confirming before anything that
   erases. The same steps by hand are in [docs/INSTALL.md](docs/INSTALL.md).
 - **The bridge,** on the computer where Herdr runs:

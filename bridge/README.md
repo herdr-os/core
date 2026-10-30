@@ -1,6 +1,6 @@
 # @herdr-os/bridge
 
-The bridge between a Rabbit R1 running [Herdr OS](https://herdr.dev) and the coding agents
+The bridge between a Rabbit R1 running [Herdr OS](https://herdr-os.org) and the coding agents
 [Herdr](https://herdr.dev) runs on your machines. It watches the herd, reads each agent's own
 session files (Claude Code, Codex, Pi, OpenCode) for its model, context, subagents and background
 commands, and gives the R1 a small authenticated API: answer questions, send messages and photos,
