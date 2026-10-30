@@ -5,12 +5,12 @@ import Screen from "../components/Screen.astro";
 import harnesses from "../harnesses.json";
 
 const chapters = [
-  { n: "01", tag: "Glance", title: "It sleeps until someone needs you.", body: "The R1 rests on the lock screen with a quiet count of who is working. Wake it and the companion tells you, in one breath, what happened while you were away.", chips: ["Asleep", "Spoken briefing", "Pasture"], screens: ["asleep", "briefing", "pasture"] },
-  { n: "02", tag: "Answer", title: "Every question arrives as the sheep that asked it.", body: "Approvals float above the agent in its own colors. Your choice glows orange, and the R1 names exactly where the answer goes before anything is sent.", chips: ["Sheep asks", "Bound to the question", "Touch approves"], screens: ["asks"] },
-  { n: "03", tag: "Talk", title: "Hold the button. It answers out loud.", body: "Walkie-talkie mode gives each agent a channel on the wheel. Your voice goes out in orange; its reply fills the screen in its brand color and is spoken back to you.", chips: ["Push to talk", "Channels on the wheel", "Spoken replies"], screens: ["walkie-you", "walkie-it"] },
-  { n: "04", tag: "Show it", title: "Point at the whiteboard. The agent sees it.", body: "Some things are faster to show than to type. Snap a photo with the R1 and the agent gets it right away, ready to work from.", chips: ["Camera", "Straight to the agent", "Thread"], screens: ["camera", "photo-sent", "thread"] },
-  { n: "05", tag: "Supervise", title: "Check the work, not just the status.", body: "See what each helper agent is doing, what's still running, and the live terminal, all scrollable on the wheel. Know if it's on track before you're back at your desk.", chips: ["Helper agents", "Running tasks", "Live terminal"], screens: ["subagents", "tasks", "terminal"] },
-  { n: "06", tag: "Steer", title: "Hand out the next job from your palm.", body: "Say a new task and pick which agent takes it. Switch a stuck agent to a stronger model, or a simple one to a cheaper one, without touching a keyboard.", chips: ["Model picker", "Effort", "New task"], screens: ["model", "new-task"] },
+  { n: "01", tag: "Rest", title: "It naps until someone needs you.", body: "Pick it up and it tells you what you missed.", screens: ["asleep", "briefing", "pasture"] },
+  { n: "02", tag: "Answer", title: "Questions come to you, one at a time.", body: "Each agent asks in its own colors. One tap answers.", screens: ["asks"] },
+  { n: "03", tag: "Talk", title: "Hold the button and just talk.", body: "It passes it on and reads the reply back to you.", screens: ["walkie-you", "walkie-it"] },
+  { n: "04", tag: "Show", title: "Show it what you mean.", body: "Snap the whiteboard. Your agent sees it right away.", screens: ["camera", "photo-sent", "thread"] },
+  { n: "05", tag: "Peek", title: "Curious? Peek in.", body: "See how the work is going without walking back to your desk.", screens: ["subagents", "tasks", "terminal"] },
+  { n: "06", tag: "Ask", title: "Give the next job out loud.", body: "Say what you need. It finds the right agent.", screens: ["model", "new-task"] },
 ];
 const screens = [...new Set(chapters.flatMap((c) => c.screens))];
 
@@ -26,17 +26,17 @@ import manifest from "../../public/downloads/manifest.json";
 const steps = [
   { where: "On the R1 and rabbit hole", time: "10 min", chrome: false, title: "Turn on developer mode and ask Rabbit to unlock", body: "In rabbit hole, under settings, r1, void the warranty to enable developer mode, then choose device modification, unlock. Rabbit's servers allow the unlock; nothing changes on the R1 yet." },
   { where: "", time: "2 min", chrome: true, title: "Unlock the bootloader", body: "Plug in the powered-off R1. The installer catches its preloader, puts it in fastboot and unlocks it. This wipes the R1." },
-  { where: "", time: "10 min", chrome: true, title: "Install a clean Android base", body: "Replaces Rabbit's software with LineageOS, an open version of Android that Herdr OS runs on." },
-  { where: "", time: "3 min", chrome: true, title: "Hand the R1 over to Herdr OS", body: "Gives Herdr OS control of the whole device, from the lock screen to the pull-down shade. You keep a copy of the original to undo it." },
-  { where: "", time: "3 min", chrome: true, title: "Install Herdr OS", body: "Installs Herdr OS, makes it the only home screen and restarts the R1 into it." },
-  { where: "On your computer", time: "5 min", chrome: false, title: "Connect it to your computer", body: "Install the small companion on the computer where your agents run and start it. It shows a code; scan it with the R1 and your herd appears.", code: "npm i -g @herdr-os/bridge && herdr-bridge serve --tailscale" },
+  { where: "", time: "10 min", chrome: true, title: "Install a clean Android base", body: "Swaps Rabbit's software for LineageOS, the open Android Herdr OS runs on." },
+  { where: "", time: "3 min", chrome: true, title: "Hand the R1 over to Herdr OS", body: "Gives Herdr OS the whole device. You keep a copy of the original to undo it." },
+  { where: "", time: "3 min", chrome: true, title: "Install Herdr OS", body: "Makes it the home screen and restarts the R1 into it." },
+  { where: "On your computer", time: "5 min", chrome: false, title: "Introduce it to your agents", body: "Run the bridge where your agents live. Scan its code with the R1 and your herd appears.", code: "npm i -g @herdr-os/bridge && herdr-bridge serve --tailscale" },
 ];
 
 const sideways = [
-  { img: "rate-limited", t: "Out of usage", d: "Wait for the reset, or finish on Sonnet with one confirmed tap." },
-  { img: "context-full", t: "Context full", d: "Compact and keep going, before the agent forgets." },
-  { img: "host-down", t: "A host goes quiet", d: "You see what it was last doing, clearly marked. Everyone else carries on." },
-  { img: "answered", t: "Already answered", d: "Someone got there first. Nothing is sent twice." },
+  { img: "rate-limited", t: "Out of usage", d: "It waits for the reset, or switches if you say so." },
+  { img: "context-full", t: "Context full", d: "It tidies up so your agent can keep going." },
+  { img: "host-down", t: "A computer goes quiet", d: "It tells you. Everyone else keeps going." },
+  { img: "answered", t: "Already answered", d: "Someone beat you to it. Nothing is sent twice." },
 ];
 ---
 <!doctype html>
@@ -44,12 +44,12 @@ const sideways = [
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Herdr OS · a herd in your hand</title>
-  <meta name="description" content="A custom OS that turns a Rabbit R1 into a dedicated remote for your coding agents: see who is working, answer what is waiting and hand out the next task, away from your desk." />
+  <title>Herdr OS · your R1, your new companion</title>
+  <meta name="description" content="Herdr OS turns your Rabbit R1 into a small companion that keeps an eye on your coding agents and tells you when one needs you." />
   <meta name="theme-color" content="#000000" />
   <link rel="icon" href="/sheep/sheep-plain.svg" type="image/svg+xml" />
-  <meta property="og:title" content="Herdr OS · a herd in your hand" />
-  <meta property="og:description" content="Your coding agents keep working when you walk away. A Rabbit R1 running Herdr OS keeps you in the loop." />
+  <meta property="og:title" content="Herdr OS · your R1, your new companion" />
+  <meta property="og:description" content="Your agents keep working when you walk away. Your R1 keeps you company and tells you when they need you." />
   <meta property="og:image" content="/og/pasture.webp" />
 </head>
 <body>
@@ -66,15 +66,15 @@ const sideways = [
   <main id="top">
     <section class="wrap hero">
       <div>
-        <p class="mono kicker dim">A custom OS for the Rabbit R1</p>
+        <p class="mono kicker dim">Herdr OS for the Rabbit R1</p>
         <h1 class="display" data-split>
-          <span class="line">Your agents,</span>
-          <span class="line">a herd in</span>
-          <span class="line orange">your hand.</span>
+          <span class="line">Your R1 is</span>
+          <span class="line">your new</span>
+          <span class="line orange">companion.</span>
         </h1>
-        <p class="lede" data-fade>Your coding agents keep working when you walk away. Herdr OS turns a Rabbit R1 into the one device that keeps you in the loop: see who's busy, answer the moment one needs you, and give the next task out loud. No laptop, no phone full of notifications.</p>
+        <p class="lede" data-fade>It keeps an eye on your coding agents while you get on with your day, and taps you on the shoulder when one needs you.</p>
         <div class="ctas" data-fade>
-          <a class="pill orange" href="#journeys">See it move</a>
+          <a class="pill orange" href="#journeys">Meet it</a>
           <a class="pill ghost" href="#install">Set it up</a>
         </div>
       </div>
@@ -94,17 +94,17 @@ const sideways = [
 
     <section class="wrap how why" aria-label="Why a whole OS">
       <p class="mono orange">Why a whole OS</p>
-      <h2 class="display section-title" data-words>Not an app. A device with one job.</h2>
+      <h2 class="display section-title" data-words>Not an app. A companion with one job.</h2>
       <div class="facts">
-        <div class="fact" data-rise><span class="mono orange">Single purpose</span><b>The R1 only does this.</b><p>Herdr OS replaces the R1's software end to end, from the lock screen to the pull-down shade. Nothing competes for your attention.</p></div>
-        <div class="fact" data-rise><span class="mono orange">Made for the hardware</span><b>Wheel, button, touch.</b><p>Roll through your agents with the wheel, hold the side button to talk, tap to approve. One hand, eyes mostly up.</p></div>
-        <div class="fact" data-rise><span class="mono orange">Always at hand</span><b>On the desk or in your pocket.</b><p>No buried notifications, no app to find. Pick it up and you know who needs you and what to do next.</p></div>
+        <div class="fact" data-rise><span class="mono orange">All yours</span><b>It only does this.</b><p>Nothing else asks for your attention.</p></div>
+        <div class="fact" data-rise><span class="mono orange">Fits your hand</span><b>Wheel, button, touch.</b><p>Roll, hold to talk, tap to answer.</p></div>
+        <div class="fact" data-rise><span class="mono orange">Always nearby</span><b>On the desk or in your pocket.</b><p>Pick it up and it tells you what's new.</p></div>
       </div>
     </section>
 
     <section class="wrap herd">
-      <p class="mono orange">The herd · {harnesses.length} harnesses</p>
-      <h2 class="display section-title" data-words>One sheep per agent. Wool in its maker's colors.</h2>
+      <p class="mono orange">Its herd · {harnesses.length} kinds of agent</p>
+      <h2 class="display section-title" data-words>Your agents become its herd.</h2>
     </section>
     <div class="carousel" aria-label={`Every harness Herdr runs: ${harnesses.map((h) => h.label).join(", ")}`} data-carousel>
       <ul class="track">
@@ -118,15 +118,14 @@ const sideways = [
       </ul>
     </div>
     <section class="wrap herd-after">
-      <p class="note dim">The plain sheep is the companion. It speaks for the herd; the branded ones speak for themselves. A sleeping sheep is idle, and the words always say so too. Any agent Herdr runs joins the herd; one it doesn't know yet grazes as a plain sheep.</p>
+      <p class="note dim">The plain sheep is your companion. The others are your agents, each in its maker's colors.</p>
     </section>
 
-    <section class="wrap principles" aria-label="Design principles">
-      <p class="mono orange">Four rules</p>
-      <div class="stmt display" data-reveal>Orange is you.<small>Your voice, your attention, anything waiting on you. Nothing else is ever orange.</small></div>
-      <div class="stmt display" data-reveal>Wheel moves. Button talks. Touch approves.<small>Three controls, three jobs, no overlap, so muscle memory never sends the wrong thing.</small></div>
-      <div class="stmt display" data-reveal>A spoken yes never approves.<small>Voice drafts, a finger decides. The side button can't answer a question by accident.</small></div>
-      <div class="stmt display" data-reveal>If it doesn't know, it says so.<small>Everything on screen comes from the agents themselves. Nothing is guessed to fill a gap.</small></div>
+    <section class="wrap principles" aria-label="Its manners">
+      <p class="mono orange">Its manners</p>
+      <div class="stmt display" data-reveal>Orange is you.<small>If it's orange, it's waiting on you.</small></div>
+      <div class="stmt display" data-reveal>It never says yes for you.<small>Your voice drafts. Your finger decides.</small></div>
+      <div class="stmt display" data-reveal>If it doesn't know, it says so.<small>No guessing to fill a gap.</small></div>
     </section>
 
     <section class="journeys" id="journeys" data-journeys>
@@ -145,7 +144,6 @@ const sideways = [
               <p class="mono"><span class="orange">{c.n}</span> <span class="dim">· {c.tag}</span></p>
               <h3 class="display">{c.title}</h3>
               <p>{c.body}</p>
-              <ul class="mono dim">{c.chips.map((x) => <li>{x}</li>)}</ul>
             </article>
           ))}
           <div class="rail" aria-hidden="true">{chapters.map(() => <i><b /></i>)}</div>
@@ -156,8 +154,8 @@ const sideways = [
     <section class="wrap hosts">
       <div>
         <p class="mono orange">Every machine</p>
-        <h2 class="display section-title" data-words>Every agent. Every machine. One glance.</h2>
-        <p class="dim" style="margin-top:24px;max-width:44ch">Past six agents the pasture folds into a flock per host. Tap one and it opens as its own field; turn the wheel and walk the whole flock.</p>
+        <h2 class="display section-title" data-words>However big the herd, one friend keeps it.</h2>
+        <p class="dim" style="margin-top:24px;max-width:44ch">Agents on every computer you own, gathered in one place.</p>
         <div class="chips mono"><span>cerebro</span><span>macbook</span><span>namek</span></div>
       </div>
       <div class="shots" data-shots>
@@ -170,8 +168,8 @@ const sideways = [
       <div class="track">
         <div class="intro">
           <p class="mono orange">Keeps time</p>
-          <h2 class="display section-title">The sky follows your clock.</h2>
-          <p class="dim" style="margin-top:22px;max-width:36ch">Dawn, day, dusk and night. The sheep's colors and your orange never change with it; only the field does.</p>
+          <h2 class="display section-title">It keeps your hours.</h2>
+          <p class="dim" style="margin-top:22px;max-width:36ch">From dawn to night, its sky follows your clock.</p>
         </div>
         {day.map((d) => (
           <figure data-sky={d.img}>
@@ -184,7 +182,7 @@ const sideways = [
 
     <section class="wrap sideways">
       <p class="mono orange">The bad days too</p>
-      <h2 class="display section-title" data-words>Designed for when things go sideways.</h2>
+      <h2 class="display section-title" data-words>It tells you when things go wrong.</h2>
       <div class="grid">
         {sideways.map((s) => (
           <figure data-rise>
@@ -213,9 +211,9 @@ const sideways = [
         <circle class="pulse" r="6" data-pulse="w1" /><circle class="pulse" r="5" data-pulse="w2" /><circle class="pulse" r="5" data-pulse="w3" /><circle class="pulse" r="5" data-pulse="w4" />
       </svg></div>
       <div class="facts">
-        <div class="fact" data-rise><span class="mono orange">Works with what you use</span><b>Claude Code, Codex, Pi, OpenCode.</b><p>No plugins, no changes to how you work. Herdr OS follows what your agents already do and talks to them the way you would.</p></div>
-        <div class="fact" data-rise><span class="mono orange">Safe answers</span><b>Never approve the wrong thing.</b><p>Your answer only goes through if the agent is still asking the exact question you saw. If it moved on, nothing is sent.</p></div>
-        <div class="fact" data-rise><span class="mono orange">Private by default</span><b>Nothing leaves your network.</b><p>The R1 talks only to a small companion on your own computer, over your own private network. Pair it once with a code; unpair it any time.</p></div>
+        <div class="fact" data-rise><span class="mono orange">Works with what you use</span><b>Claude Code, Codex, Pi, OpenCode.</b><p>No plugins. Nothing changes on your side.</p></div>
+        <div class="fact" data-rise><span class="mono orange">Careful with your yes</span><b>Never approves the wrong thing.</b><p>If the question changed, nothing is sent.</p></div>
+        <div class="fact" data-rise><span class="mono orange">Stays home</span><b>Nothing leaves your network.</b><p>It only talks to your own computer.</p></div>
       </div>
     </section>
 
@@ -223,7 +221,7 @@ const sideways = [
       <div class="install-head">
         <p class="mono orange">From stock to herd</p>
         <h2 class="display section-title" data-words>Your R1, from the box to Herdr OS.</h2>
-        <p class="dim lede-sm">About forty minutes, mostly waiting. Plug the R1 into a computer with Chrome and the installer does the work. It erases the R1 and voids Rabbit's warranty, and it tells you before every step that does.</p>
+        <p class="dim lede-sm">About forty minutes, mostly waiting. Plug the R1 into a computer with Chrome. This erases the R1 and voids Rabbit's warranty; it warns you before each step that does.</p>
         <div class="ctas"><a class="pill orange" href="/install">Install from Chrome</a><a class="pill ghost" href="#downloads">Downloads</a></div>
       </div>
       <ol class="journey">
@@ -242,7 +240,7 @@ const sideways = [
       <div>
         <p class="mono orange">Downloads · <span class="dim">{manifest.version}</span></p>
         <h2 class="display section-title">Everything the installer sends.</h2>
-        <p class="dim lede-sm">Prefer to do it by hand? These are the exact files the installer uses, each with a checksum so you know it arrived intact.</p>
+        <p class="dim lede-sm">Prefer doing it by hand? These are the installer's exact files, with checksums.</p>
       </div>
       <ul class="files">
         {manifest.files.map((f) => (

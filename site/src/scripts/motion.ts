@@ -90,8 +90,9 @@ mm.add("(prefers-reduced-motion: no-preference)", () => {
       shown = s;
     }
     if (ci !== chapterShown) {
-      gsap.to(chapters[chapterShown], { opacity: 0, y: -30, duration: 0.35 });
-      gsap.fromTo(chapters[ci], { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.6, ease: "expo.out" });
+      // The old text clears before the new one arrives, so the two never overlap.
+      gsap.to(chapters[chapterShown], { opacity: 0, y: -24, duration: 0.2, ease: "power1.in", overwrite: true });
+      gsap.fromTo(chapters[ci], { opacity: 0, y: 32 }, { opacity: 1, y: 0, duration: 0.5, delay: 0.2, ease: "expo.out", overwrite: true });
       chapterShown = ci;
     }
   };
