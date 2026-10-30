@@ -5,21 +5,14 @@ import Screen from "../components/Screen.astro";
 import harnesses from "../harnesses.json";
 
 const chapters = [
-  { n: "01", tag: "Rest", title: "It naps until someone needs you.", body: "Pick it up and it tells you what you missed.", screens: ["asleep", "briefing", "pasture"] },
-  { n: "02", tag: "Answer", title: "Questions come to you, one at a time.", body: "Each agent asks in its own colors. One tap answers.", screens: ["asks"] },
-  { n: "03", tag: "Talk", title: "Hold the button and just talk.", body: "It passes it on and reads the reply back to you.", screens: ["walkie-you", "walkie-it"] },
+  { n: "01", tag: "Rest", title: "It naps until you’re needed.", body: "Pick it up and it tells you what you missed.", screens: ["asleep", "briefing", "pasture"] },
+  { n: "02", tag: "Answer", title: "Questions come one at a time.", body: "Each agent asks in its own colors. One tap answers.", screens: ["asks"] },
+  { n: "03", tag: "Talk", title: "Hold the button. Just talk.", body: "It passes it on and reads the reply back to you.", screens: ["walkie-you", "walkie-it"] },
   { n: "04", tag: "Show", title: "Show it what you mean.", body: "Snap the whiteboard. Your agent sees it right away.", screens: ["camera", "photo-sent", "thread"] },
-  { n: "05", tag: "Peek", title: "Curious? Peek in.", body: "See how the work is going without walking back to your desk.", screens: ["subagents", "tasks", "terminal"] },
+  { n: "05", tag: "Peek", title: "Curious? Peek in.", body: "See how the work is going, away from your desk.", screens: ["subagents", "tasks", "terminal"] },
   { n: "06", tag: "Ask", title: "Give the next job out loud.", body: "Say what you need. It finds the right agent.", screens: ["model", "new-task"] },
 ];
 const screens = [...new Set(chapters.flatMap((c) => c.screens))];
-
-const day = [
-  { img: "dawn", t: "Dawn", time: "06:12" },
-  { img: "pasture", t: "Day", time: "11:40" },
-  { img: "dusk", t: "Dusk", time: "19:05" },
-  { img: "night", t: "Night", time: "23:48" },
-];
 
 import manifest from "../../public/downloads/manifest.json";
 
@@ -139,13 +132,15 @@ const sideways = [
           </div>
         </div>
         <div class="chapters">
-          {chapters.map((c) => (
-            <article class="chapter" data-chapter data-screens={c.screens.join(",")}>
-              <p class="mono"><span class="orange">{c.n}</span> <span class="dim">· {c.tag}</span></p>
-              <h3 class="display">{c.title}</h3>
-              <p>{c.body}</p>
-            </article>
-          ))}
+          <div class="stack">
+            {chapters.map((c) => (
+              <article class="chapter" data-chapter data-screens={c.screens.join(",")}>
+                <p class="mono"><span class="orange">{c.n}</span> <span class="dim">· {c.tag}</span></p>
+                <h3 class="display">{c.title}</h3>
+                <p>{c.body}</p>
+              </article>
+            ))}
+          </div>
           <div class="rail" aria-hidden="true">{chapters.map(() => <i><b /></i>)}</div>
         </div>
       </div>
@@ -156,27 +151,11 @@ const sideways = [
         <p class="mono orange">Every machine</p>
         <h2 class="display section-title" data-words>However big the herd, one friend keeps it.</h2>
         <p class="dim" style="margin-top:24px;max-width:44ch">Agents on every computer you own, gathered in one place.</p>
-        <div class="chips mono"><span>cerebro</span><span>macbook</span><span>namek</span></div>
+        <div class="chips mono"><span>laptop</span><span>desktop</span><span>server</span></div>
       </div>
       <div class="shots" data-shots>
         <div class="shot frame" style="left:0;top:6%" role="img" aria-label="The pasture folded into one flock per host"><Screen name="flocks" /></div>
         <div class="shot frame" style="right:0;top:22%" role="img" aria-label="Every agent as a deck of harness-colored cards"><Screen name="cards" /></div>
-      </div>
-    </section>
-
-    <section class="daytime" data-daytime aria-label="The pasture through the day">
-      <div class="track">
-        <div class="intro">
-          <p class="mono orange">Keeps time</p>
-          <h2 class="display section-title">It keeps your hours.</h2>
-          <p class="dim" style="margin-top:22px;max-width:36ch">From dawn to night, its sky follows your clock.</p>
-        </div>
-        {day.map((d) => (
-          <figure data-sky={d.img}>
-            <div class="frame" role="img" aria-label={`The pasture at ${d.t.toLowerCase()}`}><Screen name={d.img} /></div>
-            <figcaption class="mono"><span>{d.t}</span><span class="dim">{d.time}</span></figcaption>
-          </figure>
-        ))}
       </div>
     </section>
 
@@ -205,9 +184,9 @@ const sideways = [
         <text class="m" x="270" y="132">TAILSCALE</text>
         <g class="node"><rect x="480" y="95" width="240" height="110" rx="26" /><text x="504" y="146">Herdr bridge</text><text class="m" x="504" y="176">ON YOUR COMPUTER</text></g>
         <text class="m" x="770" y="104">SSH</text>
-        <g class="node"><rect x="960" y="20" width="220" height="80" rx="22" /><text x="984" y="58">cerebro</text><text class="m" x="984" y="82">HERDR · 2 AGENTS</text></g>
-        <g class="node"><rect x="960" y="110" width="220" height="80" rx="22" /><text x="984" y="148">macbook</text><text class="m" x="984" y="172">HERDR · 14 AGENTS</text></g>
-        <g class="node"><rect x="960" y="200" width="220" height="80" rx="22" /><text x="984" y="238">namek</text><text class="m" x="984" y="262">HERDR · 1 AGENT</text></g>
+        <g class="node"><rect x="960" y="20" width="220" height="80" rx="22" /><text x="984" y="58">laptop</text><text class="m" x="984" y="82">HERDR · 2 AGENTS</text></g>
+        <g class="node"><rect x="960" y="110" width="220" height="80" rx="22" /><text x="984" y="148">desktop</text><text class="m" x="984" y="172">HERDR · 14 AGENTS</text></g>
+        <g class="node"><rect x="960" y="200" width="220" height="80" rx="22" /><text x="984" y="238">server</text><text class="m" x="984" y="262">HERDR · 1 AGENT</text></g>
         <circle class="pulse" r="6" data-pulse="w1" /><circle class="pulse" r="5" data-pulse="w2" /><circle class="pulse" r="5" data-pulse="w3" /><circle class="pulse" r="5" data-pulse="w4" />
       </svg></div>
       <div class="facts">

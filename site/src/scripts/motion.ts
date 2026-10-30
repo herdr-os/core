@@ -115,29 +115,6 @@ mm.add("(prefers-reduced-motion: no-preference)", () => {
   gsap.fromTo("[data-shots] .shot:first-child", { y: 80, rotate: -6 }, { y: -40, rotate: -2, ease: "none", scrollTrigger: { trigger: "[data-shots]", scrub: true } });
   gsap.fromTo("[data-shots] .shot:last-child", { y: 160, rotate: 7 }, { y: -80, rotate: 3, ease: "none", scrollTrigger: { trigger: "[data-shots]", scrub: true } });
 
-  // Through the day: a sideways walk, and the whole page's sky follows it.
-  const track = $(".daytime .track");
-  const sky: Record<string, string> = { dawn: "#140c10", pasture: "#05090c", dusk: "#160a06", night: "#000000" };
-  const figures = $$<HTMLElement>("[data-sky]");
-  let skyNow = "";
-  const paint = (c: string) => { if (c !== skyNow) { skyNow = c; gsap.to(document.body, { backgroundColor: c, duration: 0.8, overwrite: true }); } };
-  // The sky belongs to whichever screen is nearest the middle; outside the walk it is night.
-  const walk = gsap.to(track, {
-    x: () => -(track.scrollWidth - window.innerWidth), ease: "none",
-    scrollTrigger: {
-      trigger: "[data-daytime]", start: "top top", end: () => `+=${(track.scrollWidth - window.innerWidth) * 2.4}`, pin: true, scrub: 0.6, invalidateOnRefresh: true,
-      onUpdate: () => {
-        const mid = innerWidth / 2;
-        const near = figures.reduce((a, f) => { const r = f.getBoundingClientRect(); const d = Math.abs(r.left + r.width / 2 - mid); return d < a.d ? { f, d } : a; }, { f: figures[0], d: Infinity });
-        paint(near.d < innerWidth * 0.45 ? sky[near.f.dataset.sky!] : "#000000");
-      },
-      onLeave: () => paint("#000000"), onLeaveBack: () => paint("#000000"),
-    },
-  });
-  figures.forEach((f) => {
-    gsap.from(f, { rotate: 4, y: 60, opacity: 0.3, ease: "none", scrollTrigger: { trigger: f, containerAnimation: walk, start: "left right", end: "left 60%", scrub: true } });
-  });
-
   gsap.utils.toArray<HTMLElement>("[data-rise]").forEach((el, i) => {
     gsap.from(el, { y: 70, opacity: 0, duration: 1, ease: "expo.out", delay: (i % 4) * 0.08, scrollTrigger: { trigger: el, start: "top 88%" } });
   });
@@ -160,6 +137,5 @@ mm.add("(prefers-reduced-motion: no-preference)", () => {
 
 // Reduced motion: no pinning or scrubbing; the journeys read as a plain stack with their first screens.
 mm.add("(prefers-reduced-motion: reduce)", () => {
-  $$("[data-chapter]").forEach((c) => { (c as HTMLElement).style.position = "relative"; (c as HTMLElement).style.opacity = "1"; });
-  const ch = $(".journeys .chapters"); ch.style.height = "auto";
+  $$("[data-chapter]").forEach((c) => { (c as HTMLElement).style.gridArea = "auto"; (c as HTMLElement).style.opacity = "1"; });
 });

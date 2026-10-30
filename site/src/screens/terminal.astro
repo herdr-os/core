@@ -31,63 +31,63 @@
         <div style={{ boxSizing: 'border-box', display: 'flex', flexDirection: 'column', paddingBottom: '6px' }}>
           <div style={{ backgroundColor: '#1A1A1A', boxSizing: 'border-box' }}>
             <div style={{ boxSizing: 'border-box', color: '#8C8880', fontFamily: '"JetBrains Mono Variable", system-ui, sans-serif', fontSize: '14.5px', lineHeight: '19px', width: 'max-content' }}>
-              &gt; Switch it. Keep plain lines behind a
+              &gt; Keep it behind a setting, off by
             </div>
           </div>
           <div style={{ backgroundColor: '#1A1A1A', boxSizing: 'border-box' }}>
             <div style={{ boxSizing: 'border-box', color: '#8C8880', fontFamily: '"JetBrains Mono Variable", system-ui, sans-serif', fontSize: '14.5px', lineHeight: '19px', whiteSpace: 'pre', width: 'max-content' }}>
-              {'  '}setting.{'                                    '}
+              {'  '}default.{'                                    '}
             </div>
           </div>
           <div style={{ boxSizing: 'border-box', color: '#D9D4CB', fontFamily: '"JetBrains Mono Variable", system-ui, sans-serif', fontSize: '14.5px', lineHeight: '19px', width: 'max-content' }}>
 
           </div>
           <div style={{ boxSizing: 'border-box', color: '#D9D4CB', fontFamily: '"JetBrains Mono Variable", system-ui, sans-serif', fontSize: '14.5px', lineHeight: '19px', width: 'max-content' }}>
-            ● I'll stream raw pane bytes into GhosttyVt
+            ● I'll add a darkMode setting and read it
           </div>
           <div style={{ boxSizing: 'border-box', color: '#D9D4CB', fontFamily: '"JetBrains Mono Variable", system-ui, sans-serif', fontSize: '14.5px', lineHeight: '19px', whiteSpace: 'pre', width: 'max-content' }}>
-            {'  '}and draw its snapshot with VtView.
+            {'  '}in the theme provider.
           </div>
         </div>
         <div style={{ boxSizing: 'border-box', color: '#8C8880', fontFamily: '"JetBrains Mono Variable", system-ui, sans-serif', fontSize: '14.5px', lineHeight: '19px', width: 'max-content' }}>
-          ⏺ <span style={{ color: '#F4EFE6', fontWeight: 700 }}>Update</span>(app/…/TerminalActivity.kt)
+          ⏺ <span style={{ color: '#F4EFE6', fontWeight: 700 }}>Update</span>(src/…/ThemeProvider.tsx)
         </div>
         <div style={{ boxSizing: 'border-box', color: '#8C8880', fontFamily: '"JetBrains Mono Variable", system-ui, sans-serif', fontSize: '14.5px', lineHeight: '19px', whiteSpace: 'pre', width: 'max-content' }}>
           {'  '}⎿ Updated with 6 additions, 2 removals
         </div>
         <div style={{ backgroundColor: '#3A1414', boxSizing: 'border-box' }}>
           <div style={{ boxSizing: 'border-box', color: '#FF9C8A', fontFamily: '"JetBrains Mono Variable", system-ui, sans-serif', fontSize: '14.5px', lineHeight: '19px', whiteSpace: 'pre', width: 'max-content' }}>
-             41 -{'    '}val lines = client.terminal(id){'    '}
+             41 -{'    '}const theme = lightTheme{'          '}
           </div>
         </div>
         <div style={{ backgroundColor: '#3A1414', boxSizing: 'border-box' }}>
           <div style={{ boxSizing: 'border-box', color: '#FF9C8A', fontFamily: '"JetBrains Mono Variable", system-ui, sans-serif', fontSize: '14.5px', lineHeight: '19px', whiteSpace: 'pre', width: 'max-content' }}>
-             42 -{'    '}render(lines){'                      '}
+             42 -{'    '}applyTheme(theme){'                  '}
           </div>
         </div>
         <div style={{ backgroundColor: '#10301C', boxSizing: 'border-box' }}>
           <div style={{ boxSizing: 'border-box', color: '#7EE2A0', fontFamily: '"JetBrains Mono Variable", system-ui, sans-serif', fontSize: '14.5px', lineHeight: '19px', whiteSpace: 'pre', width: 'max-content' }}>
-             41 +{'    '}val vt = GhosttyVt(cols, rows){'     '}
+             41 +{'    '}const dark = settings.darkMode{'    '}
           </div>
         </div>
         <div style={{ backgroundColor: '#10301C', boxSizing: 'border-box' }}>
           <div style={{ boxSizing: 'border-box', color: '#7EE2A0', fontFamily: '"JetBrains Mono Variable", system-ui, sans-serif', fontSize: '14.5px', lineHeight: '19px', whiteSpace: 'pre', width: 'max-content' }}>
-             42 +{'    '}stream.collect &#123; vt.write(it) &#125;{'    '}
+             42 +{'    '}applyTheme(dark ? darkTheme : light)
           </div>
         </div>
         <div style={{ backgroundColor: '#10301C', boxSizing: 'border-box' }}>
           <div style={{ boxSizing: 'border-box', color: '#7EE2A0', fontFamily: '"JetBrains Mono Variable", system-ui, sans-serif', fontSize: '14.5px', lineHeight: '19px', whiteSpace: 'pre', width: 'max-content' }}>
-             43 +{'    '}view.screen = vt.snapshot(){'        '}
+             43 +{'    '}watch(settings, applyTheme){'      '}
           </div>
         </div>
         <div style={{ boxSizing: 'border-box', color: '#D9D4CB', fontFamily: '"JetBrains Mono Variable", system-ui, sans-serif', fontSize: '14.5px', lineHeight: '19px', width: 'max-content' }}>
 
         </div>
         <div style={{ boxSizing: 'border-box', color: '#8C8880', fontFamily: '"JetBrains Mono Variable", system-ui, sans-serif', fontSize: '14.5px', lineHeight: '19px', width: 'max-content' }}>
-          ⏺ <span style={{ color: '#F4EFE6', fontWeight: 700 }}>Bash</span>(./gradlew :app:testDebugUnitTest)
+          ⏺ <span style={{ color: '#F4EFE6', fontWeight: 700 }}>Bash</span>(npm test)
         </div>
         <div style={{ boxSizing: 'border-box', color: '#8C8880', fontFamily: '"JetBrains Mono Variable", system-ui, sans-serif', fontSize: '14.5px', lineHeight: '19px', whiteSpace: 'pre', width: 'max-content' }}>
-          {'  '}⎿ <span style={{ color: '#4ADE80' }}>BUILD SUCCESSFUL</span> in 2m 14s
+          {'  '}⎿ <span style={{ color: '#4ADE80' }}>212 PASSED</span> in 1m 04s
         </div>
         <div style={{ boxSizing: 'border-box', color: '#D9D4CB', fontFamily: '"JetBrains Mono Variable", system-ui, sans-serif', fontSize: '14.5px', lineHeight: '19px', width: 'max-content' }}>
 
@@ -95,15 +95,15 @@
         <div style={{ boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <div style={{ borderColor: '#D97757', borderRadius: '6px', borderStyle: 'solid', borderWidth: '1.5px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '2px', padding: '8px' }}>
             <div style={{ boxSizing: 'border-box', color: '#F4EFE6', fontFamily: '"JetBrains Mono Variable", system-ui, sans-serif', fontSize: '14.5px', lineHeight: '19px' }}>
-              Keep plain lines behind a setting?
+              Follow the system theme too?
             </div>
             <div style={{ backgroundColor: '#D97757', boxSizing: 'border-box' }}>
               <div style={{ boxSizing: 'border-box', color: '#0A0A0A', fontFamily: '"JetBrains Mono Variable", system-ui, sans-serif', fontSize: '14.5px', lineHeight: '19px', width: 'max-content' }}>
-                ❯ 1. Yes, add Settings → Terminal
+                ❯ 1. Yes, match the system
               </div>
             </div>
             <div style={{ boxSizing: 'border-box', color: '#8C8880', fontFamily: '"JetBrains Mono Variable", system-ui, sans-serif', fontSize: '14.5px', lineHeight: '19px', whiteSpace: 'pre', width: 'max-content' }}>
-              {'  '}2. No, Ghostty only
+              {'  '}2. No, only the setting
             </div>
           </div>
           <div style={{ boxSizing: 'border-box', color: '#8C8880', fontFamily: '"JetBrains Mono Variable", system-ui, sans-serif', fontSize: '14.5px', lineHeight: '19px', width: 'max-content' }}>
