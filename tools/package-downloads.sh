@@ -3,7 +3,7 @@
 # source, with SHA256SUMS and a manifest.json the Chrome installer verifies before using a file.
 # Local builds are preview builds signed with this machine's key; a signed release comes from
 # tools/release/build-release.sh with the stable keystore.
-# Usage: tools/package-downloads.sh [--no-build]
+# Usage: [HERDR_VERSION=0.1.0] tools/package-downloads.sh [--no-build]
 set -euo pipefail
 source "$(dirname "$0")/lib.sh"
 
@@ -18,7 +18,7 @@ cp "$OUT/r1ptt-system.zip" "$DL/herdr-os-module.zip"
 cp "$MAGISK" "$DL/$(basename "$MAGISK")"
 tar -C "$ROOT" -czf "$DL/herdr-bridge.tar.gz" --exclude 'node_modules' --exclude 'data' --exclude '*.db' bridge/package.json bridge/src bridge/tests protocol docs/HERDR.md
 
-VERSION="preview-$(date -u +%Y%m%d)"
+VERSION="${HERDR_VERSION:-preview-$(date -u +%Y%m%d)}"
 (cd "$DL" && shasum -a 256 *.apk *.zip *.tar.gz > SHA256SUMS)
 node - "$DL" "$VERSION" "$(basename "$MAGISK")" <<'JS'
 const fs = require("fs"), path = require("path");

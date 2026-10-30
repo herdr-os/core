@@ -1,19 +1,19 @@
 {
-  "version": "preview-20261029",
-  "built": "2026-10-29T12:39:02.654Z",
+  "version": "0.1.0",
+  "built": "2026-10-30T12:17:26.609Z",
   "files": [
     {
       "name": "herdr-os.apk",
       "url": "/downloads/herdr-os.apk",
-      "sha256": "5b6a0b7df1c5ffaf9058cc30cf0b27b969daa22b6fc42524792b8dfc54bf8298",
-      "bytes": 3416951,
+      "sha256": "d34ee1cfeb3a111c70304d3298a1a4038b5be4cfebc1c7ce80584761f27f1abe",
+      "bytes": 3677821,
       "what": "The Herdr OS app for the R1 (preview build)"
     },
     {
       "name": "herdr-os-module.zip",
       "url": "/downloads/herdr-os-module.zip",
-      "sha256": "2eb86e0edb7d26e09953f1ff55a08a3278c042e0e9cb17bf61f20b807d35d560",
-      "bytes": 256529,
+      "sha256": "4491ccee28576f7eb8e873caadf28e82b9b8004e83e76c74b8e2c6b48f8b4ed1",
+      "bytes": 256611,
       "what": "Magisk module: wheel and button mapping, power defaults, no Android lock screen, Herdr boot animation"
     },
     {
@@ -26,8 +26,8 @@
     {
       "name": "herdr-bridge.tar.gz",
       "url": "/downloads/herdr-bridge.tar.gz",
-      "sha256": "37ea7b31badafcf1ea00a09f30f334a357df85dab518d2eb9aeb2b02c602d22b",
-      "bytes": 62296,
+      "sha256": "f228abb89a6a81e19db4b36f742bf53b4c04a23f1351f069f6d60ecc9f7d844b",
+      "bytes": 63857,
       "what": "The bridge for your computer (Node 25, no dependencies)"
     }
   ]
